@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container py-5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4 border-bottom pb-2 text-dark"><i class="fas fa-truck me-2 text-warning"></i>THÔNG TIN GIAO HÀNG</h4>
+                    
+                    <form th:action="@{/checkout/submit}" method="post" id="form-checkout-soranchi">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Họ và tên người nhận</label>
+                            <input type="text" name="fullName" th:value="${userProfile != null ? userProfile.fullName : ''}" class="form-control" placeholder="Nhập họ tên người nhận" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold small text-secondary">Số điện thoại</label>
+                                <input type="text" name="phone" id="customer-phone" th:value="${userProfile != null ? userProfile.phone : ''}" class="form-control" placeholder="09xxxxxxxx" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold small text-secondary">Email (không bắt buộc)</label>
+                                <input type="email" name="email" class="form-control" placeholder="example@gmail.com">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Địa chỉ giao hàng</label>
+                            <textarea name="address" class="form-control" rows="3" placeholder="Số nhà, tên đường, phường/xã..." th:text="${userProfile != null ? userProfile.address : ''}" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Ghi chú đơn hàng</label>
+                            <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Ít đường, nhiều đá..."></textarea>
+                        </div>
+                        
+                        <h5 class="fw-bold mt-4 mb-3 text-dark"><i class="fas fa-credit-card me-2 text-warning"></i>PHƯƠNG THỨC THANH TOÁN</h5>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" value="COD" id="pay-cod" checked>
+                            <label class="form-check-label fw-medium" for="pay-cod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="radio" name="paymentMethod" value="BANK" id="pay-bank">
+                            <label class="form-check-label fw-medium" for="pay-bank">Chuyển khoản ngân hàng (Quét mã VietQR)</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-3 fs-5 border border-dark rounded-3 shadow-sm text-dark">ĐẶT HÀNG NGAY</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-4 mb-3">
+                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-ticket-alt me-2 text-danger"></i>Mã khuyến mại (Voucher)</h5>
+                <form th:action="@{/checkout/apply-coupon}" method="post" class="d-flex gap-2">
+                    <input type="text" name="couponCode" class="form-control font-monospace text-uppercase" 
+                           th:value="${session.appliedPromoCode}" placeholder="Nhập mã ví dụ: NAMMOI20" required>
+                    <button type="submit" class="btn btn-dark text-warning border-0 fw-bold px-3">Áp dụng</button>
+                </form>
+                <div th:if="${session.promoError}" class="text-danger small mt-2 fw-semibold" th:text="${session.promoError}"></div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-light rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4 border-bottom pb-2 text-dark">ĐƠN HÀNG CỦA BẠN</h4>
+                    <div class="order-items overflow-auto" style="max-height: 250px;">
+                        <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <img th:src="@{'/image/' + ${item.imageUrl}}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                            <div class="ms-3 flex-grow-1">
+                                <div class="fw-bold text-dark small" th:text="${item.name}">Tên sản phẩm</div>
+                                <div class="small text-muted">Số lượng: <span th:text="${item.quantity}">1</span></div>
+                            </div>
+                            <div class="fw-bold text-danger small" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-2 small text-secondary">
+                            <span>Tạm tính hàng:</span>
+                            <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+                        
+                        <div th:if="${session.appliedPromoCode != null}" class="d-flex justify-content-between mb-2 small text-success fw-bold">
+                            <span th:text="'Khuyến mại đã áp (' + ${session.discountPercent} + '%):'">Giảm giá:</span>
+                            <span th:text="'- ' + ${#numbers.formatDecimal(session.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">-0đ</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2 small text-secondary">
+                            <span>Phí vận chuyển:</span>
+                            <span>Miễn phí</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold text-dark m-0">TỔNG CỘNG:</h5>
+                            <h5 class="fw-bold text-danger fs-4 m-0" id="checkout-total-price" 
+                                th:data-raw-price="${session.finalPrice != null ? session.finalPrice : totalPrice}" 
+                                th:text="${session.finalPrice != null} ? ${#numbers.formatDecimal(session.finalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ' : ${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="vietqrModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="vietqrModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-bottom-0 pb-0 justify-content-center position-relative">
+                    <h5 class="modal-title fw-bold text-dark mt-2" id="vietqrModalLabel">📱 CHUYỂN KHOẢN QUA MÃ VIETQR</h5>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="text-muted small mb-3">Sử dụng App Ngân hàng bất kỳ để quét mã tự động điền tiền</p>
+                    <div class="mx-auto p-3 border rounded-4 bg-white shadow-sm mb-3" style="width: 240px; height: 240px;">
+                        <img id="vietqr-image-placeholder" src="" alt="Mã QR Thanh Toán" class="img-fluid w-100 h-100" style="object-fit: contain;">
+                    </div>
+                    <div class="bg-light rounded-3 p-3 mx-2 text-start mb-2" style="font-size: 0.95rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Chủ tài khoản:</span>
+                            <span class="fw-bold text-dark">VU NGOC HAN</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Số tiền cần trả:</span>
+                            <span class="fw-bold text-danger" id="qr-modal-amount">0đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Nội dung CK:</span>
+                            <span class="fw-bold text-primary font-monospace" id="qr-modal-info">SORANCHI</span>
+                        </div>
+                    </div>
+                    <div class="text-warning bg-dark p-2 rounded-3 mx-2 small fw-bold" style="font-size: 11px;">
+                        ⚠️ Giữ nguyên nội dung chuyển khoản để hệ thống tự động duyệt đơn nhanh nhất!
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm border border-dark" id="btn-confirm-payment" style="border-radius: 8px;">
+                        ✅ Tôi đã chuyển khoản thành công
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const formCheckout = document.getElementById('form-checkout-soranchi');
+            const vietqrModalElement = document.getElementById('vietqrModal');
+            
+            if (!formCheckout || !vietqrModalElement) return;
+            
+            const vietqrModal = new bootstrap.Modal(vietqrModalElement);
+            const qrImage = document.getElementById('vietqr-image-placeholder');
+            const qrAmountText = document.getElementById('qr-modal-amount');
+            const qrInfoText = document.getElementById('qr-modal-info');
+            const btnConfirmPayment = document.getElementById('btn-confirm-payment');
+
+            formCheckout.addEventListener('submit', function(e) {
+                const isBankPayment = document.getElementById('pay-bank').checked;
+                
+                if (isBankPayment) {
+                    e.preventDefault(); // Chặn form để hiện QR
+                    
+                    const totalPriceElement = document.getElementById('checkout-total-price');
+                    const amount = totalPriceElement.getAttribute('data-raw-price') || "0";
+                    const phoneInput = document.getElementById('customer-phone');
+                    const customerPhone = phoneInput ? phoneInput.value.trim() : "KHANH";
+                    
+                    const paymentDescription = `SORANCHI ${customerPhone}`.toUpperCase().replace(/\s+/g, '');
+                    
+                    const BANK_ID = "VCB"; 
+                    const ACCOUNT_NO = "1234567890"; 
+                    const ACCOUNT_NAME = "VU NGOC HAN"; 
+                    
+                    // Ghép link API VietQR động (đã bốc chuẩn số tiền cuối cùng sau giảm giá)
+                    const qrApiUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.jpg?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(paymentDescription)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                    
+                    qrImage.src = qrApiUrl;
+                    qrAmountText.textContent = parseInt(amount).toLocaleString('vi-VN') + "đ";
+                    qrInfoText.textContent = paymentDescription;
+                    
+                    vietqrModal.show();
+                }
+            });
+
+            btnConfirmPayment.addEventListener('click', function() {
+                vietqrModal.hide();
+                formCheckout.submit(); // Submit form lên hàm /checkout/submit thật sự
+            });
+        })();
+    </script>
+</div>
+
+</body>
+</html>

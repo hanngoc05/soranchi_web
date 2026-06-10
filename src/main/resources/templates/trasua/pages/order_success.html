@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-5 text-center bg-white rounded-4 shadow-sm border my-4">
+    <div class="mb-4">
+        <i class="fas fa-check-circle text-success" style="font-size: 4.5rem;"></i>
+    </div>
+    <h3 class="fw-bold text-dark mb-2">ĐẶT HÀNG THÀNH CÔNG!</h3>
+    <p class="text-secondary mb-3 fs-5">Mã đơn hàng của bạn là: <span class="text-danger fw-bold font-monospace" th:text="'#' + ${successOrderId}"></span></p>
+    <div class="alert alert-warning d-inline-block border-0 rounded-pill px-4 py-2 small fw-bold text-dark shadow-sm">
+        ⏳ Hệ thống đang chuẩn bị món ăn. Bạn sẽ được tự động quay về trang chủ sau <span id="countdown">3</span> giây...
+    </div>
+    
+    <script>
+        let seconds = 3;
+        const interval = setInterval(() => {
+            seconds--;
+            document.getElementById('countdown').innerText = seconds;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                window.location.href = '/';
+            }
+        }, 1000);
+    </script>
+</div>
+</body>
+</html>

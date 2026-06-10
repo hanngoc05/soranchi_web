@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container py-5" style="max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 8px;" id="detail-scroll-zone">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <div class="mb-4">
+        <a href="/products" class="text-decoration-none text-dark fw-bold">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách sản phẩm
+        </a>
+    </div>
+
+    <div class="row g-5" th:if="${product != null}">
+        <div class="col-12 col-lg-6">
+            <div class="product-image-container shadow-sm rounded overflow-hidden bg-white p-2 border">
+                <img th:src="@{'/image/' + ${product.imageUrl}}" 
+                     th:alt="${product.name}" 
+                     class="img-fluid w-100 rounded" 
+                     style="object-fit: cover; min-height: 400px; height: 450px;">
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="ps-lg-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/" class="text-warning fw-bold text-decoration-none">Trang chủ</a></li>
+                        <li class="breadcrumb-item active fw-bold" th:text="${product.category}">Danh mục</li>
+                    </ol>
+                </nav>
+
+                <h1 class="display-5 fw-bold mb-2 text-dark" th:text="${product.name}">Tên sản phẩm</h1>
+                
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <div class="text-warning small">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">4.9 ⭐</span>
+                    <span class="text-muted small">(<span id="review-count-badge" th:text="${totalReviews}">0</span> đánh giá thực tế)</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-4">
+                    <h2 class="text-danger fw-bold m-0" 
+                        th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+                        0 VNĐ
+                    </h2>
+                    <span class="ms-3 badge bg-success px-2 py-1.5">Còn hàng</span>
+                </div>
+
+                <div class="product-description mb-4">
+                    <h5 class="fw-bold text-dark">Mô tả sản phẩm:</h5>
+                    <p class="text-muted" style="line-height: 1.6;">
+                        Món <span th:text="${product.name}" class="fw-bold text-dark"></span> đặc sản của Soranchi Milk Tea. 
+                        Được pha chế từ những nguyên liệu tươi ngon nhất, mang lại hương vị đặc trưng khó quên. 
+                        Sản phẩm không chứa chất bảo quản, đảm bảo an toàn vệ sinh thực phẩm.
+                    </p>
+                </div>
+
+                <hr class="my-4 opacity-25">
+
+                <form th:action="@{/cart/add}" method="post" class="action-area">
+                    <input type="hidden" name="id" th:value="${product.id}">
+                    <input type="hidden" name="options" value="">
+
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="quantity" class="fw-bold text-secondary">Số lượng:</label>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group" style="width: 130px;">
+                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(-1)">-</button>
+                                <input type="number" name="quantity" id="quantity" class="form-control text-center fw-bold bg-transparent" value="1" min="1" readonly>
+                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(1)">+</button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold" style="background-color: #1a1a1a; border-radius: 6px;">
+                                <i class="fas fa-cart-plus me-2"></i> THÊM VÀO GIỎ HÀNG
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-4 p-3 bg-light rounded-3">
+                    <small class="text-muted fw-medium">
+                        <i class="fas fa-truck me-2 text-warning"></i> Giao hàng tận nơi tốc hành trong vòng 15-30 phút.<br>
+                        <i class="fas fa-shield-alt me-2 text-warning"></i> Đảm bảo tiêu chuẩn chất lượng Soranchi 100%.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${product == null}" class="text-center py-5">
+        <h2 class="text-muted">Rất tiếc, sản phẩm này hiện không tồn tại!</h2>
+        <a href="/products" class="btn btn-warning mt-3 fw-bold">Quay lại cửa hàng</a>
+    </div>
+
+    <hr class="my-5 opacity-25">
+
+    <div class="row g-4" th:if="${product != null}">
+        <div class="col-lg-7">
+            <h4 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+                💬 KHÁCH HÀNG NÓI GÌ VỀ MÓN NÀY?
+            </h4>
+            <div id="review-list-container" class="d-flex flex-column gap-3">
+                
+                <div th:if="${#lists.isEmpty(reviews)}" class="text-muted small py-4 text-center border bg-light rounded-3">
+                    Hiện chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên chia sẻ cảm nhận!
+                </div>
+
+                <div th:each="rev : ${reviews}" class="review-item-box p-3 bg-light rounded-3 border-start border-warning border-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div>
+                            <span class="fw-bold text-dark d-block" style="font-size: 0.95rem;" th:text="${rev.customerName}">Tên Khách</span>
+                            <div class="text-warning" style="font-size: 0.75rem;">
+                                <i th:each="i : ${#numbers.sequence(1, 5)}" 
+                                   th:class="${i <= rev.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                            </div>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.8rem;" th:text="${rev.getFormattedDate()}">Ngày tạo</span>
+                    </div>
+                    <p class="text-secondary mb-0 small mt-1" th:text="${rev.comment}">Nội dung bình luận thật từ DB</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-light border-top border-warning border-4">
+                <h5 class="fw-bold text-dark mb-1">✨ CHIA SẺ CẢM NHẬN</h5>
+                <p class="text-muted small mb-3">Ý kiến của bạn giúp cải thiện chất lượng Soranchi mỗi ngày</p>
+                
+                <span id="session-user-fullname" th:text="${session.loggedInUser != null ? session.loggedInUser.fullName : 'Khách ẩn danh'}" style="display: none;"></span>
+
+                <form id="form-submit-review-soranchi" th:action="@{/product/review}" method="post">
+                    <input type="hidden" name="productId" th:value="${product.id}">
+                    
+                    <input type="hidden" name="rating" id="input-hidden-rating-value" value="5">
+
+                    <div class="mb-3">
+                        <label class="form-label d-block fw-bold text-secondary small mb-1">Chọn số sao đánh giá:</label>
+                        <div class="d-flex gap-2 text-warning fs-4" id="star-rating-selector" style="cursor: pointer;">
+                            <i class="fas fa-star" data-index="1"></i>
+                            <i class="fas fa-star" data-index="2"></i>
+                            <i class="fas fa-star" data-index="3"></i>
+                            <i class="fas fa-star" data-index="4"></i>
+                            <i class="fas fa-star" data-index="5"></i>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary small mb-1">Nội dung bình luận:</label>
+                        <textarea name="comment" id="review-comment-text" class="form-control border-0 p-3 shadow-sm text-dark" rows="3" style="border-radius: 10px; font-size: 0.9rem;" placeholder="Cảm nhận của bạn về hương vị, độ ngọt, đá hoặc cách phục vụ của món ăn này..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold text-warning border border-warning" style="border-radius: 8px; letter-spacing: 0.5px;">
+                        <i class="fas fa-paper-plane me-2"></i> GỬI ĐÁNH GIÁ NGAY
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Hàm thay đổi số lượng đặt hàng gốc của bạn
+        function changeQty(amt) {
+            var qtyInput = document.getElementById('quantity');
+            var currentVal = parseInt(qtyInput.value);
+            if (!isNaN(currentVal)) {
+                var newVal = currentVal + amt;
+                if (newVal >= 1) qtyInput.value = newVal;
+            }
+        }
+
+        // 2. Logic điều khiển Đánh giá & Chọn sao động
+        (function() {
+            let selectedRatingStars = 5;
+            const starSelectorBox = document.getElementById('star-rating-selector');
+            const inputHiddenRating = document.getElementById('input-hidden-rating-value');
+            if (!starSelectorBox) return;
+            
+            const starsCollection = starSelectorBox.querySelectorAll('i');
+
+            starsCollection.forEach(star => {
+                star.addEventListener('mouseover', function() {
+                    highlightStars(parseInt(this.getAttribute('data-index')));
+                });
+                star.addEventListener('mouseleave', function() {
+                    highlightStars(selectedRatingStars);
+                });
+                star.addEventListener('click', function() {
+                    selectedRatingStars = parseInt(this.getAttribute('data-index'));
+                    if (inputHiddenRating) {
+                        inputHiddenRating.value = selectedRatingStars; // Đóng số sao đã chốt vào thẻ ẩn để gửi lên Java
+                    }
+                    highlightStars(selectedRatingStars);
+                });
+            });
+
+            function highlightStars(index) {
+                starsCollection.forEach(star => {
+                    if (parseInt(star.getAttribute('data-index')) <= index) {
+                        star.className = 'fas fa-star';
+                    } else {
+                        star.className = 'far fa-star';
+                    }
+                });
+            }
+            // ĐÃ GỠ BỎ HOÀN TOÀN: Logic formReview.addEventListener('submit') chặn dữ liệu cũ! Form giờ sẽ submit thật lên Java.
+        })();
+    </script>
+
+    <style>
+        #detail-scroll-zone::-webkit-scrollbar { width: 5px; }
+        #detail-scroll-zone::-webkit-scrollbar-thumb { background-color: #d4a017; border-radius: 10px; }
+        .product-image-container img { transition: transform 0.3s ease; }
+        .product-image-container:hover img { transform: scale(1.03); }
+        .breadcrumb-item + .breadcrumb-item::before { content: ">" !important; }
+    </style>
+</div>
+
+</body>
+</html>

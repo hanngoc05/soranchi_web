@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white p-3">
+                    <h4 class="mb-0" th:text="${product.id == 0} ? 'THÊM SẢN PHẨM MỚI' : 'CHỈNH SỬA SẢN PHẨM'"></h4>
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{/admin/product/save}" th:object="${product}" method="post">
+                        
+                        <input type="hidden" th:field="*{id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            <input type="text" th:field="*{name}" class="form-control" placeholder="Ví dụ: Hồng Trà Sữa" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá tiền (VNĐ)</label>
+                                <input type="number" th:field="*{price}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Danh mục</label>
+                                <select th:field="*{category}" class="form-select" required>
+                                    <option th:each="cat : ${categories}" th:value="${cat.name}" th:text="${cat.name}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Link ảnh sản phẩm</label>
+                            <input type="text" th:field="*{imageUrl}" class="form-control" placeholder="https://images.unsplash.com/...">
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning px-4 fw-bold">LƯU DỮ LIỆU</button>
+                            <a th:href="@{/products}" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

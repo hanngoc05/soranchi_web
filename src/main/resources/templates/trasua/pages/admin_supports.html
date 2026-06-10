@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    <div class="mb-4">
+        <h5 class="fw-bold text-dark font-monospace mb-1">🎧 TRUNG TÂM TIẾP NHẬN HỖ TRỢ & KHIẾU NẠI</h5>
+        <p class="small text-muted m-0">Lắng nghe ý kiến của khách hàng để nâng cấp chất lượng dịch vụ Soranchi</p>
+    </div>
+
+    <div class="card border shadow-sm bg-white rounded-3 overflow-hidden">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-dark font-monospace" style="background-color: #2d251e;">
+                <tr>
+                    <th class="ps-3 py-3">Khách Hàng</th>
+                    <th>Loại Khiếu Nại</th>
+                    <th>Nội Dung Chi Tiết</th>
+                    <th class="text-center">Trạng Thái xử lý</th>
+                    <th class="text-center">Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(complaints)}">
+                    <td colspan="5" class="text-center py-4 text-muted font-monospace">Tuyệt vời! Hiện tại hệ thống sạch sẽ, không có khiếu nại nào chưa được xử lý.</td>
+                </tr>
+                <tr th:each="c : ${complaints}" style="border-bottom: 1px solid #faf5ef;">
+                    <td class="ps-3">
+                        <div class="fw-bold" th:text="${c.customerName}"></div>
+                        <div class="text-secondary font-monospace small" th:text="${c.customerPhone}"></div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1" th:text="${c.issueType}"></span>
+                    </td>
+                    <td class="text-muted" style="max-width: 300px; white-space: normal;" th:text="${c.content}"></td>
+                    <td class="text-center">
+                        <span th:text="${c.status}" class="badge px-3 py-1.5 rounded-pill font-monospace"
+                              th:classappend="${c.status == 'CHƯA XỬ LÝ'} ? 'bg-warning text-dark' : 'bg-success text-white'"></span>
+                    </td>
+                    <td class="text-center">
+                        <a th:if="${c.status == 'CHỜ XÁC NHẬN' or c.status == 'CHƯA XỬ LÝ'}" th:href="@{/admin/support/resolve/{id}(id=${c.id})}" class="btn btn-xs text-white px-3 font-monospace" style="background-color: #5c4033; font-size: 11px;">
+                            ✓ ĐÃ ĐỀN BÙ / GIẢI QUYẾT XONG
+                        </a>
+                        <span th:unless="${c.status == 'CHỜ XÁC NHẬN' or c.status == 'CHƯA XỬ LÝ'}" class="text-muted small italic">Nội dung đã khép lại</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

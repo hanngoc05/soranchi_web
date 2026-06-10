@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    
+    <div class="mb-4">
+        <h5 class="fw-bold text-dark font-monospace mb-1" style="color: #2d251e !important;">📂 HỆ THỐNG QUẢN LÝ DANH MỤC</h5>
+        <p class="small text-muted m-0">Quản trị toàn diện danh sách phân loại các dòng trà sữa hiển thị trên hệ thống</p>
+    </div>
+
+    <div th:if="${param.error == 'foreign_key'}" class="alert alert-danger border-0 small fw-bold shadow-sm mb-3 rounded-3">
+        ⚠️ Không thể xoá danh mục này vì đang có sản phẩm thuộc danh mục này! Hãy xoá hoặc đổi danh mục của sản phẩm trước.
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card p-4 border shadow-sm bg-white rounded-3">
+                <h6 class="fw-bold text-dark font-monospace border-bottom pb-2 mb-3" id="form-title">➕ THÊM DANH MỤC MỚI</h6>
+                
+                <form th:action="@{/admin/category/save}" method="post" id="categoryForm">
+                    <input type="hidden" name="id" id="categoryId">
+                    
+                    <div class="mb-3">
+                        <label class="small fw-medium mb-1 text-secondary">Tên danh mục hiển thị</label>
+                        <input type="text" name="name" id="categoryName" class="form-control form-control-sm rounded-2" required placeholder="Ví dụ: Sữa chua dẻo">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="small fw-medium mb-1 text-secondary">Mã định danh URL (Alias viết liền không dấu)</label>
+                        <input type="text" name="alias" id="categoryAlias" class="form-control form-control-sm rounded-2" required placeholder="Ví dụ: suachuadeo">
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm text-white font-monospace fw-bold py-2 flex-grow-1" style="background-color: #2d251e;">
+                            💾 LƯU DỮ LIỆU
+                        </button>
+                        <button type="button" id="btn-cancel-edit" class="btn btn-sm btn-light border font-monospace d-none" onclick="resetForm()">
+                            Hủy sửa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card p-3 border shadow-sm bg-white rounded-3">
+                <h6 class="fw-bold text-dark font-monospace border-bottom pb-2 mb-3">Các nhóm danh mục hiện hành</h6>
+                <div class="table-responsive small">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-2">ID</th>
+                                <th>Tên Nhóm</th>
+                                <th>Định Danh (Alias)</th>
+                                <th class="text-center">Tác Vụ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${categories}" style="border-bottom: 1px solid #faf5ef;">
+                                <td class="ps-2 font-monospace text-muted" th:text="${c.id}"></td>
+                                <td class="fw-bold text-dark" th:text="${c.name}"></td>
+                                <td class="font-monospace text-secondary" th:text="${c.alias}"></td>
+                                <td class="text-center">
+                                    <button class="btn btn-xs btn-outline-dark me-1 fw-bold" style="font-size: 11px;"
+                                            th:onclick="editCategory([[${c.id}]], [[${c.name}]], [[${c.alias}]])">Sửa</button>
+                                    
+                                    <a th:href="@{/admin/category/delete/{id}(id=${c.id})}" class="btn btn-xs btn-outline-danger fw-bold" style="font-size: 11px;"
+                                       onclick="return confirm('Soranchi yêu cầu xác nhận: Bạn có chắc chắn muốn xoá danh mục này không?')">Xoá</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function editCategory(id, name, alias) {
+            // Đổ dữ liệu vào các ô ô nhập liệu của form
+            document.getElementById('categoryId').value = id;
+            document.getElementById('categoryName').value = name;
+            document.getElementById('categoryAlias').value = alias;
+            
+            // Thay đổi tiêu đề form thành chế độ cập nhật
+            document.getElementById('form-title').innerText = "✏️ CẬP NHẬT DANH MỤC (#" + id + ")";
+            // Hiện nút "Hủy sửa" công khai
+            document.getElementById('btn-cancel-edit').classList.remove('d-none');
+        }
+
+        function resetForm() {
+            // Làm sạch toàn bộ form, đưa ID ẩn về null để quay lại luồng thêm mới ban đầu
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryForm').reset();
+            
+            document.getElementById('form-title').innerText = "➕ THÊM DANH MỤC MỚI";
+            document.getElementById('btn-cancel-edit').classList.add('d-none');
+        }
+    </script>
+</div>
+</body>
+</html>

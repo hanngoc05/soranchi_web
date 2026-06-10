@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    
+    <div class="mb-3">
+        <a th:href="@{/admin/orders}" class="text-secondary small text-decoration-none">⬅ Quay lại danh sách đơn hàng</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="card border border-light bg-white p-4 rounded-3 shadow-sm">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <h6 class="fw-bold font-monospace m-0">ĐƠN HÀNG <span style="color: #d4a017;" th:text="'#SRC' + ${order.id}"></span></h6>
+                    <span th:text="${order.status}" class="badge px-3 py-1.5 rounded-pill font-monospace text-dark" style="background-color: #faf5ef; border: 1px solid #d4a017;"></span>
+                </div>
+
+                <div class="p-3 mb-4 rounded-3 text-center" style="background-color: #faf8f5; border: 1px dashed #e5dacb;">
+                    <p class="small text-muted mb-2">Bấm click xử lý bước tiếp theo đúng luồng Soranchi:</p>
+                    
+                    <a th:if="${order.status == 'CHỜ XÁC NHẬN'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2" style="background-color: #d4a017; color: white;">
+                        ✓ XÁC NHẬN & BẮT ĐẦU PHA CHẾ MÓN
+                    </a>
+                    <a th:if="${order.status == 'ĐANG CHUẨN BỊ'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2 text-white" style="background-color: #5c4033;">
+                        📦 ĐÓNG GÓI & BÀO GIAO CHO SHIPPER
+                    </a>
+                    <a th:if="${order.status == 'ĐANG GIAO HÀNG'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2 text-white" style="background-color: #15803d;">
+                        🤝 KHÁCH ĐÃ NHẬN LY - HOÀN THÀNH ĐƠN
+                    </a>
+                </div>
+
+                <h6 class="small fw-bold mb-3 font-monospace">📍 ĐỊA CHỈ KHÁCH NHẬN</h6>
+                <div class="small mb-2 text-secondary">Người nhận: <span class="text-dark fw-medium" th:text="${order.fullName}"></span></div>
+                <div class="small mb-2 text-secondary">Điện thoại: <span class="text-dark font-monospace" th:text="${order.phone}"></span></div>
+                <div class="small mb-2 text-secondary">Địa chỉ giao: <span class="text-dark" th:text="${order.address}"></span></div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 p-3 rounded-3 shadow-sm" style="background-color: #fdfbf9;">
+                <h6 class="small fw-bold border-bottom pb-2 mb-3 font-monospace">🥤 LY TRÀ SỮA ĐÃ ĐẶT</h6>
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <div th:each="item : ${orderItems}" class="d-flex align-items-center justify-content-between bg-white p-2 rounded border border-light">
+                        <div class="d-flex align-items-center gap-2 small">
+                            <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : '/image/' + item.imageUrl}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                            <div>
+                                <span class="fw-bold d-block" style="color: #2d251e;" th:text="${item.productName}"></span>
+                                <span class="text-muted small" th:text="'Số lượng: ' + ${item.quantity}"></span>
+                            </div>
+                        </div>
+                        <span class="fw-bold text-dark font-monospace small" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center fw-bold text-dark pt-2 border-top">
+                    <span class="small font-monospace">TỔNG TIỀN:</span>
+                    <span style="color: #5c4033;" class="fs-5" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

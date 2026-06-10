@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    
+    <div class="mb-4">
+        <h5 class="fw-bold font-monospace mb-1" style="color: #2d251e !important;">📈 THỐNG KÊ DOANH THU CỬA HÀNG</h5>
+        <p class="small text-muted m-0">Báo cáo tài chính và hiệu suất bán ra các dòng ly trà sữa Soranchi</p>
+    </div>
+
+    <div class="card p-3 border border-light bg-white rounded-3 shadow-sm mb-4">
+        <form th:action="@{/admin/revenue}" method="get" class="row g-3 align-items-center small">
+            <div class="col-md-5 d-flex gap-2">
+                <a th:href="@{/admin/revenue(quickFilter='TODAY')}" class="btn btn-sm px-3 rounded-pill fw-bold" th:classappend="${quickFilter == 'TODAY'} ? 'btn-dark' : 'btn-light text-secondary'">Hôm nay</a>
+                <a th:href="@{/admin/revenue(quickFilter='MONTH')}" class="btn btn-sm px-3 rounded-pill fw-bold" th:classappend="${quickFilter == 'MONTH'} ? 'btn-dark' : 'btn-light text-secondary'">Tháng này</a>
+                <a th:href="@{/admin/revenue(quickFilter='YEAR')}" class="btn btn-sm px-3 rounded-pill fw-bold" th:classappend="${quickFilter == 'YEAR'} ? 'btn-dark' : 'btn-light text-secondary'">Năm nay</a>
+            </div>
+            <div class="col-md-5 d-flex align-items-center gap-2">
+                <input type="date" name="startDate" th:value="${startDate}" class="form-control form-control-sm rounded-2">
+                <span class="text-muted">➔</span>
+                <input type="date" name="endDate" th:value="${endDate}" class="form-control form-control-sm rounded-2">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm w-100 text-white font-monospace fw-bold py-2" style="background-color: #2d251e;">XEM KẾT QUẢ</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card p-3 border-0 rounded-3 shadow-sm text-start" style="background-color: #faf5ef; border-top: 3px solid #d4a017 !important;">
+                <div class="small text-muted font-monospace text-uppercase fw-bold mb-1">💰 Tổng Doanh Thu</div>
+                <h3 class="fw-bold m-0 text-dark" th:text="${#numbers.formatDecimal(data.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</h3>
+                <span class="text-success small fw-medium mt-1 d-block">✓ Dòng tiền đơn thành công</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 border-0 rounded-3 shadow-sm text-start" style="background-color: #f4f6f8; border-top: 3px solid #6c757d !important;">
+                <div class="small text-muted font-monospace text-uppercase fw-bold mb-1">📦 Đơn hàng thành công</div>
+                <h3 class="fw-bold m-0 text-dark" th:text="${data.totalOrders} + ' Đơn'">0 Đơn</h3>
+                <span class="text-secondary small mt-1 d-block">Đã hoàn thành giao nhận</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 border-0 rounded-3 shadow-sm text-start" style="background-color: #f0fdf4; border-top: 3px solid #15803d !important;">
+                <div class="small text-muted font-monospace text-uppercase fw-bold mb-1">🥤 Ly Trà Sữa Đã Bán</div>
+                <h3 class="fw-bold m-0 text-dark" th:text="${data.totalProductsSold} + ' Ly'">0 Ly</h3>
+                <span class="text-success small mt-1 d-block">Đã trao tận tay khách hàng</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border border-light p-4 bg-white rounded-3 shadow-sm">
+        <h6 class="fw-bold mb-4 font-monospace" style="color: #2d251e;"><i class="fas fa-chart-bar me-1 text-warning"></i> BIỂU ĐỒ XU HƯỚNG TĂNG TRƯỞNG DOANH THU</h6>
+        <div style="height: 320px; position: relative;">
+            <canvas id="soranchiRevenueChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        // Bốc dữ liệu mảng ngày (Labels) và mảng tiền (Data) từ Java DTO sang JavaScript Inline
+        const labelsData = /*[[${data.chartLabels}]]*/ [];
+        const revenueData = /*[[${data.chartData}]]*/ [];
+
+        const ctx = document.getElementById('soranchiRevenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar', // Dạng biểu đồ cột chuẩn chỉnh sang trọng
+            data: {
+                labels: labelsData,
+                datasets: [{
+                    label: 'Doanh thu ngày (VNĐ)',
+                    data: revenueData,
+                    backgroundColor: 'rgba(212, 160, 23, 0.15)', // Màu vàng kim mờ nhã nhặn
+                    borderColor: '#d4a017',                    // Đường viền vàng kim thương hiệu
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    hoverBackgroundColor: '#2d251e'             // Hover cột đổi sang màu nâu ấm đen quý phái
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // Tắt nhãn chú thích phụ cho tối giản diện mạo
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('vi-VN') + 'đ'; // Định dạng tiền trục Y
+                            },
+                            color: '#6b7280'
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#6b7280' }
+                    }
+                }
+            }
+        });
+    </script>
+</div>
+</body>
+</html>

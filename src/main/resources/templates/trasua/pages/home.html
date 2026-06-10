@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="w-100">
+    
+    <div class="home-scroll-container">
+
+        <div id="promoCarousel" class="carousel slide shadow-sm mb-5" data-bs-ride="carousel">
+            <div class="carousel-inner rounded-4">
+                
+                <div class="carousel-item active">
+                    <img th:src="@{/image/noel.jpg}" class="d-block w-100" style="height: 450px; object-fit: cover;" alt="MUA 1 TẶNG 1">
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                        <h2>MUA 1 TẶNG 1</h2>
+                        <p>Áp dụng cho tất cả trà sữa trân châu vào thứ 2 hàng tuần.</p>
+                        <span class="badge bg-danger p-2">Giảm 50%</span>
+                    </div>
+                </div>
+                
+                <div class="carousel-item">
+                    <img th:src="@{/image/noel.jpg}" class="d-block w-100" style="height: 450px; object-fit: cover;" alt="GIẢM 20% TỔNG BILL">
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                        <h2>GIẢM 20% TỔNG BILL</h2>
+                        <p>Chào mừng bạn mới, giảm ngay 20% cho đơn hàng đầu tiên.</p>
+                        <span class="badge bg-danger p-2">Giảm 20%</span>
+                    </div>
+                </div>
+                
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold" style="color: #1a1a1a; letter-spacing: 1px;">MÓN MỚI PHẢI THỬ</h2>
+                <div class="mx-auto bg-warning" style="height: 4px; width: 60px;"></div>
+            </div>
+            
+            <div class="row g-4 mb-5">
+                
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/trasua.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Hồng Trà Sữa Soranchi</h6>
+                            <p class="text-danger fw-bold mb-2">45,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="1">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/matcha.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Trà Sữa Matcha Đậu Đỏ</h6>
+                            <p class="text-danger fw-bold mb-2">50,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="2">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/cfkem.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Trà Sữa Trân Châu Hoàng Kim</h6>
+                            <p class="text-danger fw-bold mb-2">48,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="3">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/traxoaimachiato.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Trà Đào Cam Sả</h6>
+                            <p class="text-danger fw-bold mb-2">45,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="11">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/nuoc_cam.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Trà Hoa Quả Nhiệt Đới</h6>
+                            <p class="text-danger fw-bold mb-2">50,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="14">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/set_banh.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Khoai Tây Chiên cực giòn</h6>
+                            <p class="text-danger fw-bold mb-2">30,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="21">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/banh.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Bánh Gấu Soranchi</h6>
+                            <p class="text-danger fw-bold mb-2">20,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="30">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="card h-100 border-0 shadow-sm hover-up" style="border-radius: 12px; overflow: hidden;">
+                        <img th:src="@{/image/cacaodaxay.jpg}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h6 class="card-title fw-bold text-dark mb-1">Trà Sữa Socola Đậm Vị</h6>
+                            <p class="text-danger fw-bold mb-2">48,000 VNĐ</p>
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="id" value="9">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-dark btn-sm w-100 py-2 fw-bold">THÊM VÀO GIỎ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <style>
+        .home-scroll-container {
+            height: calc(100vh - 110px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding-right: 5px;
+        }
+        .home-scroll-container::-webkit-scrollbar { width: 5px; }
+        .home-scroll-container::-webkit-scrollbar-thumb { background-color: #d4a017; border-radius: 10px; }
+        .hover-up:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; transition: 0.3s; }
+    </style>
+</div>
+
+</body>
+</html>

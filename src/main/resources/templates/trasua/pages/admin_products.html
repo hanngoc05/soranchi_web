@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: #d4a017 !important;">
+        <h3 class="fw-bold mb-0" style="color: #1a1a1a; letter-spacing: 0.5px; font-size: 1.6rem;">
+            <i class="fas fa-tasks me-2" style="color: #d4a017;"></i> QUẢN LÝ SẢN PHẨM
+        </h3>
+        <a th:href="@{/admin/product/add}" class="btn text-white fw-bold px-4 py-2 shadow-sm btn-add-custom">
+            <i class="fas fa-plus-circle me-2"></i> Thêm sản phẩm mới
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="card-body p-0">
+            
+            <div class="row g-0 bg-dark text-white p-3 fw-bold align-items-center text-center fs-6" style="background-color: #1a1a1a !important; border-bottom: 3px solid #d4a017;">
+                <div class="col-2 col-md-1 text-start ps-4">Ảnh</div>
+                <div class="col-4 col-md-4 text-start ps-3">Tên sản phẩm</div>
+                <div class="col-md-2 d-none d-md-block">Danh mục</div>
+                <div class="col-3 col-md-2">Giá bán</div>
+                <div class="col-3 col-md-3">Hành động</div>
+            </div>
+
+            <div th:each="product : ${products}" class="row g-0 p-3 align-items-center text-center border-bottom product-row-custom bg-white">
+                
+                <div class="col-2 col-md-1 text-start ps-4">
+                    <img th:src="'/image/' + ${product.imageUrl}" 
+                         th:alt="${product.name}" 
+                         class="rounded-3 shadow-sm border" 
+                         style="width: 60px; height: 60px; object-fit: cover;">
+                </div>
+
+                <div class="col-4 col-md-4 text-start ps-3">
+                    <h6 class="fw-bold text-dark mb-0 fs-6" th:text="${product.name}">Tên trà sữa</h6>
+                    <span class="badge bg-light text-dark border d-md-none mt-1" style="font-size: 10px;" th:text="${product.category}">Danh mục</span>
+                </div>
+
+                <div class="col-md-2 d-none d-md-block">
+                    <span class="badge rounded-pill px-3 py-2 bg-light text-dark border" th:text="${product.category}">Trà sữa</span>
+                </div>
+
+                <div class="col-3 col-md-2 fw-bold text-danger" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">
+                    0đ
+                </div>
+
+                <div class="col-3 col-md-3 d-flex justify-content-center gap-1 gap-md-2">
+                    <a th:href="@{/admin/product/edit/{id}(id=${product.id})}" class="btn btn-sm text-white px-2 px-md-3 fw-bold rounded-2 btn-action" style="background-color: #d4a017;">
+                        <i class="fas fa-edit d-none d-md-inline me-1"></i> Sửa
+                    </a>
+                    <a th:href="@{/admin/product/delete/{id}(id=${product.id})}" class="btn btn-sm btn-dark text-white px-2 px-md-3 fw-bold rounded-2 btn-action" onclick="return confirm('Bạn chắc chắn muốn xóa vĩnh viễn sản phẩm này?')">
+                        <i class="fas fa-trash d-none d-md-inline me-1"></i> Xóa
+                    </a>
+                </div>
+
+            </div> 
+            
+            <div th:if="${#lists.isEmpty(products)}" class="p-5 text-center text-muted">
+                <i class="fas fa-box-open fa-3x mb-3 text-secondary"></i>
+                <p class="fs-5 mb-0">Chưa có sản phẩm nào trong hệ thống.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <style>
+        .btn-add-custom {
+            background-color: #1a1a1a;
+            border: 1px solid #d4a017;
+            transition: all 0.25s;
+        }
+        .btn-add-custom:hover {
+            background-color: #d4a017;
+            color: #1a1a1a !important;
+            transform: translateY(-2px);
+        }
+        .product-row-custom {
+            transition: all 0.2s ease-in-out;
+        }
+        .product-row-custom:hover {
+            background-color: #fdfbf7 !important;
+            box-shadow: inset 4px 0 0 #d4a017;
+        }
+        .btn-action {
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-3">
+    <div th:if="${session.loggedInUser == null}" class="card border-0 shadow-sm p-4 text-center bg-white border-top border-danger border-4 mx-auto" style="max-width: 440px;">
+        <div class="text-danger fs-2 mb-2"><i class="fas fa-exclamation-triangle"></i></div>
+        <h6 class="fw-bold text-dark mb-1">YÊU CẦU ĐĂNG NHẬP</h6>
+        <p class="text-muted small mb-3">Bạn phải sở hữu tài khoản thành viên và đăng nhập để có thể yêu cầu hỗ trợ.</p>
+        <a th:href="@{/login}" class="btn btn-sm btn-dark border border-warning text-warning fw-bold">ĐĂNG NHẬP NGAY</a>
+    </div>
+
+    <div th:unless="${session.loggedInUser == null}" class="card border-0 shadow-sm p-4 rounded bg-white border-top border-warning border-4 mx-auto" style="max-width: 500px;">
+        <h5 class="fw-bold text-dark mb-1">🛠️ TRUNG TÂM HỖ TRỢ KHÁCH HÀNG</h5>
+        <p class="text-muted small mb-3">Người gửi yêu cầu: <span class="fw-bold text-dark" th:text="${session.loggedInUser.fullName}"></span></p>
+        <form>
+            <div class="mb-2">
+                <label class="form-label small fw-bold">Loại sự cố cần báo cáo</label>
+                <select class="form-select form-select-sm">
+                    <option>Sự cố giao đồ uống muộn</option>
+                    <option>Lỗi cổng thanh toán trực tuyến</option>
+                    <option>Yêu cầu hỗ trợ tài khoản thành viên</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Chi tiết nội dung sự cố</label>
+                <textarea class="form-control form-control-sm" rows="4" placeholder="Vui lòng nhập chi tiết vấn đề bạn cần giúp đỡ..." required></textarea>
+            </div>
+            <button type="button" onclick="alert('Yêu cầu hỗ trợ của bạn đã được ghi nhận trên hệ thống!')" class="btn btn-warning btn-sm w-100 fw-bold border border-dark">GỬI YÊU CẦU HỖ TRỢ</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

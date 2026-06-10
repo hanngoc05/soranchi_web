@@ -1,0 +1,179 @@
+<div th:fragment="sidebar" class="sidebar-wrapper bg-white shadow-sm border rounded-4 overflow-hidden">
+    
+    <div class="sidebar-header-title text-uppercase font-monospace" 
+         th:text="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'} ? 'Hệ thống Admin' : 'Menu Cửa Hàng'">
+         Menu Cửa Hàng
+    </div>
+
+    <div class="list-group list-group-flush standard-sidebar-group">
+        
+        <a class="list-group-item list-group-item-action sidebar-main-link" th:href="@{/}">
+            <i class="fas fa-home me-2 mx-1"></i> Trang chủ
+        </a>
+
+        <div th:if="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}" class="w-100">
+            
+            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center fw-bold text-dark bg-light" 
+               data-bs-toggle="collapse" 
+               href="#adminCoreDropdown" 
+               role="button" 
+               aria-expanded="true">
+                <span><i class="fas fa-user-shield me-2 mx-1 text-warning"></i> Chức năng quản trị</span>
+                <span class="dropdown-arrow-icon text-muted small">▼</span>
+            </a>
+            
+            <div class="collapse show" id="adminCoreDropdown">
+                <div class="admin-sub-menu-box bg-light border-start border-warning border-2">
+                    
+                    <a class="list-group-item list-group-item-action sub-item-link fw-bold" th:href="@{/admin/revenue}">
+                        <i class="fas fa-chart-line me-2 text-warning"></i> Thống kê Doanh thu
+                    </a>
+
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/orders}">
+                        <i class="fas fa-clipboard-list me-2 text-primary"></i> Quản lý Đơn hàng
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/categories}">
+                        <i class="fas fa-th-list me-2 text-success"></i> Quản lý Danh mục
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/products}">
+                        <i class="fas fa-boxes me-2 text-info"></i> Quản lý Sản phẩm
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/promotions}">
+                        <i class="fas fa-tags me-2 text-danger"></i> Quản lý Khuyến mại
+                    </a>
+
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/policies}">
+                        <i class="fas fa-file-contract me-2 text-success"></i> Quản lý Chính sách
+                    </a>
+
+                    <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/supports}">
+                        <i class="fas fa-headset me-2 text-secondary"></i> Khiếu nại của khách
+                    </a>
+
+                    <div th:if="${contentTemplate == 'trasua/pages/list' or contentTemplate == 'trasua/pages/home'}" class="w-100">
+                        <hr class="my-1 opacity-25">
+                        <div class="px-3 py-1.5 small text-muted fw-bold" style="font-size: 11px;">Mỏ neo danh mục sản phẩm:</div>
+                        <a th:each="cat : ${globalCategories}" 
+                           class="list-group-item list-group-item-action sub-item-link ps-4" 
+                           th:href="'#section-' + ${cat.alias}">
+                           <i class="fas fa-link me-1 text-muted small"></i> <span th:text="${cat.name}"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:unless="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}">
+            <div th:if="${contentTemplate == 'trasua/pages/list' or contentTemplate == 'trasua/pages/home'}" class="w-100">
+                <a th:each="cat : ${globalCategories}" 
+                   class="list-group-item list-group-item-action sidebar-category-link" 
+                   th:href="'#section-' + ${cat.alias}">
+                   <i class="fas fa-chevron-right text-muted me-2 small-arrow"></i> 
+                   <span th:text="${cat.name}">Tên danh mục</span>
+                </a>
+            </div>
+        </div>
+
+        <a th:if="${session.loggedInUser == null}" class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/register}">
+            <i class="fas fa-user-plus me-2 mx-1"></i> Đăng ký tài khoản
+        </a>
+
+        <a th:if="${session.loggedInUser == null}" class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/login}">
+            <i class="fas fa-sign-in-alt me-2 mx-1"></i> Đăng nhập công khai
+        </a>
+
+        <a class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/promotions}">
+            <i class="fas fa-gift me-2 mx-1 text-danger"></i> Xem Khuyến mại
+        </a>
+
+        <a th:if="${session.loggedInUser != null}" class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/profile}">
+            <i class="fas fa-user-cog me-2 mx-1"></i> Hồ sơ cá nhân
+        </a>
+
+        <a th:if="${session.loggedInUser != null}" class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/my-orders}">
+            <i class="fas fa-history me-2 mx-1"></i> Đơn hàng của tôi
+        </a>
+
+        <a class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/policy}">
+            <i class="fas fa-file-alt me-2 mx-1"></i> Điều khoản & chính sách
+        </a>
+
+        <a class="list-group-item list-group-item-action sidebar-secondary-link" th:href="@{/support}">
+            <i class="fas fa-headset me-2 mx-1"></i> Hỗ trợ khách hàng
+        </a>
+
+        <a th:if="${session.loggedInUser != null}" 
+           class="list-group-item list-group-item-action text-danger border-top bg-light" 
+           th:href="@{/logout}"
+           style="font-weight: 600; background-color: #fff5f5 !important;">
+            <i class="fas fa-power-off me-2 mx-1 text-danger"></i> Đăng xuất tài khoản
+        </a>
+
+    </div>
+
+    <style>
+        .sidebar-wrapper {
+            border: 1px solid #eef0f2 !important;
+            border-radius: 12px !important;
+            background: #ffffff;
+        }
+        .sidebar-header-title {
+            background-color: #1a1a1a;
+            color: #d4a017;
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #d4a017;
+        }
+        .standard-sidebar-group .list-group-item {
+            padding: 12px 20px !important;
+            font-size: 0.92rem;
+            color: #495057;
+            border-bottom: 1px solid #f1f3f5 !important;
+            transition: all 0.2s ease-in-out;
+            background: transparent;
+        }
+        .standard-sidebar-group .list-group-item:hover {
+            color: #d4a017 !important;
+            background-color: #fafbfc !important;
+            padding-left: 24px !important;
+        }
+        .sidebar-main-link {
+            font-weight: 600;
+            color: #1a1a1a !important;
+        }
+        .sidebar-category-link {
+            font-weight: 500;
+            padding-left: 25px !important;
+        }
+        .small-arrow {
+            font-size: 0.7rem;
+            color: #adb5bd !important;
+            transition: transform 0.2s;
+        }
+        .sidebar-category-link:hover .small-arrow {
+            color: #d4a017 !important;
+            transform: translateX(3px);
+        }
+        .admin-sub-menu-box .sub-item-link {
+            padding: 10px 20px 10px 30px !important;
+            font-size: 0.88rem !important;
+            color: #212529 !important;
+            border: none !important;
+            border-bottom: 1px solid #e9ecef !important;
+        }
+        .admin-sub-menu-box .sub-item-link:hover {
+            color: #d4a017 !important;
+            padding-left: 35px !important;
+            background-color: #f8f9fa !important;
+        }
+        .list-group-item[aria-expanded="true"] .dropdown-arrow-icon {
+            transform: rotate(180deg);
+            display: inline-block;
+        }
+    </style>
+</div>

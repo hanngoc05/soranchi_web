@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="w-100">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div th:if="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}" id="admin-scroll-zone" class="scroll-zone-custom">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2 pe-2">
+            <h3 style="color: #1a1a1a; border-left: 5px solid #d4a017; padding-left: 10px; font-weight: bold; margin-bottom: 0;">
+                QUẢN LÝ SẢN PHẨM
+            </h3>
+            <a th:href="@{/admin/product/add}" class="btn btn-dark btn-sm fw-bold px-3 py-2 border border-warning text-warning" style="border-radius: 6px; letter-spacing: 0.5px; font-size: 0.85rem;">
+                <i class="fas fa-plus-circle me-1"></i> ➕ THÊM SẢN PHẨM MỚI
+            </a>
+        </div>
+        
+        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.alias}" class="category-group-block">
+            
+            <div class="luxury-menu-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="menu-title-text text-uppercase mb-0">
+                        <span class="gold-badge-bar"></span>
+                        <span th:text="${cat.name}">TÊN DANH MỤC</span>
+                    </h2>
+                    <span class="luxury-sub-tag bg-dark text-warning">Soranchi Admin</span>
+                </div>
+                <div class="gold-separator-line">
+                    <div class="gold-active-chunk"></div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+                <div class="card-body p-0">
+                    <div class="row g-0 bg-dark text-white p-3 fw-bold align-items-center text-center" style="background-color: #1a1a1a !important; border-bottom: 3px solid #d4a017;">
+                        <div class="col-2 text-start ps-4">Ảnh</div>
+                        <div class="col-5 text-start ps-3">Tên sản phẩm</div>
+                        <div class="col-2">Giá bán</div>
+                        <div class="col-3">Hành động</div>
+                    </div>
+                    
+                    <div th:each="product : ${products}" th:if="${product.category == cat.name}" class="row g-0 p-3 align-items-center text-center border-bottom bg-white">
+                        <div class="col-2 text-start ps-4">
+                            <img th:src="@{'/image/' + ${product.imageUrl}}" class="rounded-3 shadow-sm border" style="width: 60px; height: 60px; object-fit: cover;">
+                        </div>
+                        <div class="col-5 text-start ps-3">
+                            <h6 class="fw-bold text-dark mb-0 fs-6" th:text="${product.name}">Tên sản phẩm</h6>
+                        </div>
+                        <div class="col-2 fw-bold text-danger" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
+                        <div class="col-3 d-flex justify-content-center gap-2">
+                            <a th:href="@{/admin/product/edit/{id}(id=${product.id})}" class="btn btn-sm text-white px-3 fw-bold" style="background-color: #d4a017;">Sửa</a>
+                            <a th:href="@{/admin/product/delete/{id}(id=${product.id})}" class="btn btn-sm btn-dark text-white px-3 fw-bold" onclick="return confirm('Bạn chắc chắn muốn xóa không?')">Xóa</a>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(products)}" class="p-3 text-center text-muted bg-white" style="display: none;">
+                        Chưa có sản phẩm nào trong danh mục này.
+                    </div>
+                </div>
+            </div>
+            
+        </div> 
+    </div>
+
+    <div th:unless="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}" id="shop-scroll-zone" class="scroll-zone-custom">
+        
+        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.alias}" class="category-group-block">
+            
+            <div class="luxury-menu-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="menu-title-text text-uppercase mb-0">
+                        <span class="gold-badge-bar"></span>
+                        <span th:text="${cat.name}">TÊN DANH MỤC</span>
+                    </h2>
+                    <span class="luxury-sub-tag">Soranchi Menu</span>
+                </div>
+                <div class="gold-separator-line">
+                    <div class="gold-active-chunk"></div>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div th:each="product : ${products}" th:if="${product.category == cat.name}" class="col-12 col-md-6 col-lg-4">
+                    <div class="product-card">
+                        <a th:href="@{/product/{id}(id=${product.id})}" class="product-img-wrap">
+                            <img th:src="@{'/image/' + ${product.imageUrl}}" th:alt="${product.name}" class="product-img">
+                            <div class="icon-overlay"><i class="fas fa-eye">🔎</i></div>
+                        </a>
+                        <div class="product-info text-center">
+                            <div class="product-title fw-bold text-dark fs-5" th:text="${product.name}">Tên sản phẩm</div>
+                            <div class="product-price text-danger fw-bold mt-1" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
+                            
+                            <div class="mt-3 mb-1">
+                                <button type="button" 
+                                        class="btn btn-dark w-100 btn-sm py-2 fw-bold btn-trigger-topping"
+                                        th:data-id="${product.id}"
+                                        th:data-name="${product.name}"
+                                        th:data-price="${product.price}"
+                                        th:data-img="@{'/image/' + ${product.imageUrl}}">
+                                    <i class="fas fa-cart-plus me-1"></i> THÊM VÀO GIỎ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="toppingModal" tabindex="-1" aria-labelledby="toppingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                
+                <div class="modal-header border-bottom-0 pb-0 position-relative">
+                    <div class="d-flex align-items-center gap-3 w-100 mt-2">
+                        <img id="modal-product-img" src="" class="rounded-3 border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1" id="modal-product-name">Tên sản phẩm</h4>
+                            <h5 class="fw-bold text-danger mb-0"><span id="modal-realtime-price">0</span> VNĐ</h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body py-4" style="max-height: 60vh; overflow-y: auto;">
+                    
+                    <div class="option-group mb-4">
+                        <label class="fw-bold text-dark mb-2 d-flex justify-content-between">
+                            <span>🍬 Mức đường</span>
+                            <span class="badge bg-warning text-dark" style="font-size: 10px;">Bắt buộc</span>
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check option-sugar" name="sugarLevel" id="sugar100" value="100% Đường" checked>
+                                <label class="btn btn-outline-dark w-100 py-2 text-start fs-7" for="sugar100">100% Đường</label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check option-sugar" name="sugarLevel" id="sugar70" value="70% Đường">
+                                <label class="btn btn-outline-dark w-100 py-2 text-start fs-7" for="sugar70">70% Đường</label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check option-sugar" name="sugarLevel" id="sugar50" value="50% Đường">
+                                <label class="btn btn-outline-dark w-100 py-2 text-start fs-7" for="sugar50">50% Đường</label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check option-sugar" name="sugarLevel" id="sugar0" value="0% Đường">
+                                <label class="btn btn-outline-dark w-100 py-2 text-start fs-7" for="sugar0">0% (Không đường)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group mb-4">
+                        <label class="fw-bold text-dark mb-2 d-flex justify-content-between">
+                            <span>❄️ Mức đá</span>
+                            <span class="badge bg-warning text-dark" style="font-size: 10px;">Bắt buộc</span>
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-ice" name="iceLevel" id="iceNormal" value="Đá bình thường" checked>
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="iceNormal">Bình thường</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-ice" name="iceLevel" id="ice70" value="Ít đá (70%)">
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="ice70">Ít đá (70%)</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-ice" name="iceLevel" id="ice0" value="Không đá">
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="ice0">Không đá</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <label class="fw-bold text-dark mb-2">🧋 Thêm Topping</label>
+                        <div class="list-group border-0">
+                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Trân châu hoàng kim" data-price="6000">
+                                    <span class="text-dark">Trân châu hoàng kim</span>
+                                </div>
+                                <span class="text-muted small">+6,000đ</span>
+                            </label>
+                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Thạch sương sáo" data-price="5000">
+                                    <span class="text-dark">Thạch sương sáo</span>
+                                </div>
+                                <span class="text-muted small">+5,000đ</span>
+                            </label>
+                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Kem cheese" data-price="10000">
+                                    <span class="text-dark">Kem cheese</span>
+                                </div>
+                                <span class="text-muted small">+10,000đ</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-top-0 d-flex justify-content-between align-items-center pt-0">
+                    <div class="d-flex align-items-center border rounded-3 p-1 bg-light">
+                        <button type="button" class="btn btn-sm border-0 px-2 text-secondary fw-bold" id="btn-qty-minus" style="font-size: 1.1rem;">−</button>
+                        <input type="number" id="modal-quantity" value="1" min="1" readonly class="text-center border-0 bg-transparent fw-bold text-dark" style="width: 35px;">
+                        <button type="button" class="btn btn-sm border-0 px-2 text-secondary fw-bold" id="btn-qty-plus" style="font-size: 1.1rem;">+</button>
+                    </div>
+                    
+                    <form th:action="@{/cart/add}" method="post" id="form-add-to-cart" class="flex-grow-1 ms-3">
+                        <input type="hidden" name="id" id="submit-product-id">
+                        <input type="hidden" name="quantity" id="submit-quantity" value="1">
+                        <input type="hidden" name="options" id="submit-options" value="">
+                        
+                        <button type="submit" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm border border-dark" id="btn-confirm-add" style="border-radius: 8px;">
+                            Thêm vào giỏ hàng - <span id="modal-total-price-btn">0</span>đ
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // 1. Logic trượt cuộn mỏ neo Sidebar gốc
+            setTimeout(function() {
+                const scrollZone = document.getElementById("admin-scroll-zone") || document.getElementById("shop-scroll-zone");
+                const sidebarLinks = document.querySelectorAll('.sidebar-custom a[href^="#section-"], a[href^="#section-"]');
+                
+                if (scrollZone && sidebarLinks.length > 0) {
+                    sidebarLinks.forEach(link => {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault(); 
+                            const targetId = this.getAttribute("href").substring(1);
+                            const targetElement = document.getElementById(targetId);
+                            if (targetElement) {
+                                const targetPos = targetElement.getBoundingClientRect().top - scrollZone.getBoundingClientRect().top;
+                                const finalScroll = scrollZone.scrollTop + targetPos;
+                                scrollZone.scrollTo({
+                                    top: finalScroll - 5,
+                                    behavior: "smooth"
+                                });
+                            }
+                        });
+                    });
+                }
+            }, 100);
+
+            // 2. Logic điều khiển Topping Modal thời gian thực (Realtime)
+            const toppingModalElement = document.getElementById('toppingModal');
+            if (!toppingModalElement) return;
+            
+            const toppingModal = new bootstrap.Modal(toppingModalElement);
+            const modalImg = document.getElementById('modal-product-img');
+            const modalName = document.getElementById('modal-product-name');
+            const modalRealtimePrice = document.getElementById('modal-realtime-price');
+            const modalTotalPriceBtn = document.getElementById('modal-total-price-btn');
+            
+            const inputQty = document.getElementById('modal-quantity');
+            const btnMinus = document.getElementById('btn-qty-minus');
+            const btnPlus = document.getElementById('btn-qty-plus');
+            
+            const submitProductId = document.getElementById('submit-product-id');
+            const submitQuantity = document.getElementById('submit-quantity');
+            const submitOptions = document.getElementById('submit-options');
+            
+            let currentBasePrice = 0;
+            let currentQuantity = 1;
+
+            function formatMoney(amount) {
+                return amount.toLocaleString('vi-VN');
+            }
+
+            // ĐÃ SỬA DỨT KHOÁT: Khóa cứng giá phía trên ảnh luôn là giá gốc, tiền chỉ tăng ở nút bấm dưới cùng
+            function calculateTotalPrice() {
+                let toppingValueSum = 0;
+                const activeToppings = document.querySelectorAll('.option-topping:checked');
+                activeToppings.forEach(checkbox => {
+                    toppingValueSum += parseInt(checkbox.getAttribute('data-price') || 0);
+                });
+                
+                // Ép giá cạnh hình ảnh luôn cố định giá gốc ban đầu
+                modalRealtimePrice.textContent = formatMoney(currentBasePrice);
+                
+                // Nút bấm dưới cùng sẽ tăng tịnh tiến theo cả topping chọn thêm và số lượng
+                const totalFinalPrice = (currentBasePrice + toppingValueSum) * currentQuantity;
+                modalTotalPriceBtn.textContent = formatMoney(totalFinalPrice);
+            }
+
+            // Bắt sự kiện click mở Modal
+            document.addEventListener('click', function(e) {
+                const triggerBtn = e.target.closest('.btn-trigger-topping');
+                if (triggerBtn) {
+                    e.preventDefault();
+                    
+                    const pId = triggerBtn.getAttribute('data-id');
+                    const pName = triggerBtn.getAttribute('data-name');
+                    currentBasePrice = parseFloat(triggerBtn.getAttribute('data-price') || 0);
+                    const pImg = triggerBtn.getAttribute('data-img');
+                    
+                    submitProductId.value = pId;
+                    modalName.textContent = pName;
+                    modalImg.src = pImg;
+                    
+                    currentQuantity = 1;
+                    inputQty.value = 1;
+                    submitQuantity.value = 1;
+                    document.getElementById('sugar100').checked = true;
+                    document.getElementById('iceNormal').checked = true;
+                    document.querySelectorAll('.option-topping').forEach(cb => cb.checked = false);
+                    
+                    calculateTotalPrice();
+                    toppingModal.show();
+                }
+            });
+
+            // Lắng nghe thay đổi topping
+            document.querySelectorAll('.option-topping').forEach(checkbox => {
+                checkbox.addEventListener('change', calculateTotalPrice);
+            });
+
+            // Bộ số lượng
+            btnPlus.addEventListener('click', function() {
+                currentQuantity++;
+                inputQty.value = currentQuantity;
+                submitQuantity.value = currentQuantity;
+                calculateTotalPrice();
+            });
+
+            btnMinus.addEventListener('click', function() {
+                if (currentQuantity > 1) {
+                    currentQuantity--;
+                    inputQty.value = currentQuantity;
+                    submitQuantity.value = currentQuantity;
+                    calculateTotalPrice();
+                }
+            });
+
+            // Đóng gói chuỗi text options gửi lên Java Controller
+            document.getElementById('form-add-to-cart').addEventListener('submit', function() {
+                const sugarText = document.querySelector('.option-sugar:checked').value;
+                const iceText = document.querySelector('.option-ice:checked').value;
+                let toppingList = [];
+                document.querySelectorAll('.option-topping:checked').forEach(cb => {
+                    toppingList.push(cb.value);
+                });
+                submitOptions.value = `${sugarText}, ${iceText}` + (toppingList.length > 0 ? `, Topping: ${toppingList.join(', ')}` : '');
+            });
+        })();
+    </script>
+
+    <style>
+        .scroll-zone-custom {
+            height: calc(100vh - 120px) !important; 
+            overflow-y: auto !important; 
+            overflow-x: hidden !important;
+        }
+        .scroll-zone-custom::-webkit-scrollbar { width: 6px; }
+        .scroll-zone-custom::-webkit-scrollbar-thumb { background-color: #d4a017; border-radius: 10px; }
+        .category-group-block { margin-bottom: 50px !important; padding-top: 15px; }
+        .luxury-menu-header { width: 100%; margin-bottom: 25px; }
+        .menu-title-text { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; letter-spacing: 0.5px; display: flex; align-items: center; }
+        .gold-badge-bar { width: 5px; height: 26px; background-color: #d4a017; margin-right: 15px; display: inline-block; border-radius: 4px; }
+        .luxury-sub-tag { font-size: 0.75rem; padding: 4px 12px; border-radius: 4px; font-weight: bold; }
+        .gold-separator-line { width: 100%; height: 2px; background-color: #e9ecef; margin-top: 12px; position: relative; }
+        .gold-active-chunk { position: absolute; top: 0; left: 0; width: 100px; height: 100%; background-color: #d4a017; }
+        
+        /* Style riêng biệt cho nút option check dạng Luxury */
+        .btn-check:checked + .btn-outline-dark { background-color: #1a1a1a !important; color: #d4a017 !important; border-color: #1a1a1a !important; font-weight: bold; }
+        .fs-7 { font-size: 0.85rem; }
+        .style-cursor { cursor: pointer; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold"><i class="fas fa-list"></i> QUẢN LÝ DANH MỤC</h3>
+        <a th:href="@{/admin/category/add}" class="btn btn-success fw-bold">
+            <i class="fas fa-plus"></i> Thêm danh mục
+        </a>
+    </div>
+
+    <table class="table table-bordered table-hover text-center align-middle bg-white shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Tên danh mục</th>
+                <th>Tên Alias (URL)</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cat : ${categories}">
+                <td th:text="${cat.id}">1</td>
+                <td class="fw-bold text-primary" th:text="${cat.name}">Trà sữa</td>
+                <td th:text="${cat.alias}">trasua</td>
+                <td>
+                    <a th:href="@{/admin/category/edit/{id}(id=${cat.id})}" class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i> Sửa</a>
+                    <a th:href="@{/admin/category/delete/{id}(id=${cat.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Xóa danh mục này?')"><i class="fas fa-trash"></i> Xóa</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

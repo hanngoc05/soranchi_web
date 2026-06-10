@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 border-top border-warning border-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4" th:text="${category.id == 0 ? 'THÊM DANH MỤC MỚI' : 'SỬA DANH MỤC'}">Form</h4>
+                    
+                    <form th:action="@{/admin/category/save}" th:object="${category}" method="post">
+                        <input type="hidden" th:field="*{id}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên danh mục</label>
+                            <input type="text" th:field="*{name}" class="form-control" placeholder="VD: Trà trái cây" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Tên định danh (Alias)</label>
+                            <input type="text" th:field="*{alias}" class="form-control" placeholder="VD: tratraicay (Viết liền không dấu)" required>
+                            <small class="text-muted">Được dùng để tạo đường dẫn: /category/tratraicay</small>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning fw-bold w-50">LƯU DỮ LIỆU</button>
+                            <a th:href="@{/admin/category}" class="btn btn-secondary fw-bold w-50">HỦY BỎ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

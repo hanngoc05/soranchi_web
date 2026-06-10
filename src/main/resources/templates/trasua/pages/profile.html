@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-3">
+    <div th:if="${param.success}" class="alert alert-success border-0 shadow-sm rounded-3 small fw-bold mb-3">
+        🎉 Cập nhật thông tin cá nhân thành công!
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4 text-center">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <img th:src="@{'/avatar/' + ${user.avatarUrl}}" alt="Avatar" class="rounded-circle object-fit-cover mx-auto border border-3 border-warning shadow-sm mb-3" style="width: 120px; height: 120px;">
+                <h5 class="fw-bold text-dark mb-1" th:text="${user.fullName}">Tên khách</h5>
+                <span class="badge bg-secondary font-monospace text-uppercase" style="font-size: 0.75rem;" th:text="${user.role}">USER</span>
+                <hr class="opacity-25 my-3">
+                <p class="text-muted small m-0"><i class="far fa-calendar-check me-1"></i> Thành viên hệ thống Soranchi Tea</p>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-4" style="border-left: 4px solid #d4a017; padding-left: 8px;">Thông tin cá nhân</h5>
+                
+                <form th:action="@{/profile/update}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Tên tài khoản (Không thể đổi)</label>
+                        <input type="text" th:value="${user.username}" class="form-control form-control-sm bg-light" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Họ và tên</label>
+                        <input type="text" name="fullName" th:value="${user.fullName}" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Số điện thoại giao hàng</label>
+                        <input type="text" name="phone" th:value="${user.phone}" class="form-control form-control-sm" pattern="[0-9]{10}" title="Vui lòng nhập đúng 10 số điện thoại" required placeholder="Ví dụ: 0987654321">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Địa chỉ mặc định</label>
+                        <textarea name="address" class="form-control form-control-sm" rows="3" th:text="${user.address}" required placeholder="Số nhà, tên đường, xã/phường..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-sm btn-warning border border-dark fw-bold w-100 py-2 mt-2" style="border-radius: 6px;">
+                        LƯU THAY ĐỔI
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

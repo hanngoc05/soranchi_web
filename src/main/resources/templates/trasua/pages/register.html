@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-3">
+    <div class="card border-0 shadow-sm p-4 rounded-3 bg-white border-top border-warning border-4 mx-auto" style="max-width: 460px;">
+        <h4 class="fw-bold text-center text-dark mb-4">✨ TẠO TÀI KHOẢN THÀNH VIÊN</h4>
+        <div th:if="${error}" class="alert alert-danger py-2 small" th:text="${error}"></div>
+
+        <form th:action="@{/register}" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Họ và tên</label>
+                <input type="text" name="fullName" class="form-control form-control-sm" required placeholder="Nguyễn Văn A">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Tên đăng nhập</label>
+                <input type="text" name="username" class="form-control form-control-sm" required placeholder="user123">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Mật khẩu</label>
+                <input type="password" name="password" class="form-control form-control-sm" required placeholder="••••••••">
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-secondary">Chọn hình đại diện</label>
+                <input type="file" name="avatarFile" class="form-control form-control-sm" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold border border-dark">ĐĂNG KÝ NGAY</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

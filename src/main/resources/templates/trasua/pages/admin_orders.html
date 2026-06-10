@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    
+    <div class="mb-4">
+        <h5 class="fw-bold text-dark font-monospace mb-1" style="color: #2d251e !important;">📊 QUẢN LÝ ĐƠN HÀNG</h5>
+        <p class="small text-muted m-0">Hệ thống xử lý danh sách đơn hàng thời gian thực của Soranchi</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4 p-2 bg-white border rounded-3 small">
+        <a th:href="@{/admin/orders(status='ALL')}" class="btn btn-sm px-3 rounded-pill" th:classappend="${currentFilter == 'ALL'} ? 'btn-dark' : 'btn-light text-secondary'">Tất cả</a>
+        <a th:href="@{/admin/orders(status='CHỜ XÁC NHẬN')}" class="btn btn-sm px-3 rounded-pill" th:classappend="${currentFilter == 'CHỜ XÁC NHẬN'} ? 'btn-dark' : 'btn-light text-secondary'">⏳ Chờ duyệt</a>
+        <a th:href="@{/admin/orders(status='ĐANG CHUẨN BỊ')}" class="btn btn-sm px-3 rounded-pill" th:classappend="${currentFilter == 'ĐANG CHUẨN BỊ'} ? 'btn-dark' : 'btn-light text-secondary'">🍵 Đang làm món</a>
+        <a th:href="@{/admin/orders(status='ĐANG GIAO HÀNG')}" class="btn btn-sm px-3 rounded-pill" th:classappend="${currentFilter == 'ĐANG GIAO HÀNG'} ? 'btn-dark' : 'btn-light text-secondary'">🛵 Đang giao</a>
+        <a th:href="@{/admin/orders(status='HOÀN THÀNH')}" class="btn btn-sm px-3 rounded-pill" th:classappend="${currentFilter == 'HOÀN THÀNH'} ? 'btn-dark' : 'btn-light text-secondary'">✅ Hoàn thành</a>
+    </div>
+
+    <div class="card border border-light shadow-sm rounded-3 bg-white overflow-hidden">
+        <table class="table align-middle mb-0 small">
+            <thead style="background-color: #2d251e; color: #d4a017;">
+                <tr>
+                    <th class="ps-3 py-3 font-monospace">Mã Đơn</th>
+                    <th>Khách Hàng</th>
+                    <th>Tổng Thanh Toán</th>
+                    <th class="text-center">Hình Thức</th>
+                    <th class="text-center">Trạng Thái</th>
+                    <th class="text-center">Tác Vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="o : ${orders}" style="border-bottom: 1px solid #faf5ef;">
+                    <td class="ps-3 font-monospace fw-bold text-dark" th:text="'#SRC' + ${o.id}"></td>
+                    <td>
+                        <div class="fw-bold" style="color: #2d251e;" th:text="${o.fullName}"></div>
+                        <div class="text-muted small font-monospace" th:text="${o.phone}"></div>
+                    </td>
+                    <td class="fw-bold" style="color: #5c4033;" th:text="${#numbers.formatDecimal(o.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                    <td class="text-center">
+                        <span class="small font-monospace" th:text="${o.paymentMethod}"></span>
+                    </td>
+                    <td class="text-center">
+                        <span th:text="${o.status}" class="badge px-3 py-1.5 rounded-pill font-monospace border fw-medium"
+                              th:style="${o.status == 'CHỜ XÁC NHẬN'} ? 'background-color: #fffbeb; color: #b45309; border-color: #fef3c7;' : 
+                                       (${o.status == 'ĐANG CHUẨN BỊ'} ? 'background-color: #ecfeff; color: #0891b2; border-color: #cffafe;' : 
+                                       (${o.status == 'ĐANG GIAO HÀNG'} ? 'background-color: #eff6ff; color: #1d4ed8; border-color: #dbeafe;' : 
+                                       (${o.status == 'HOÀN THÀNH'} ? 'background-color: #f0fdf4; color: #15803d; border-color: #dcfce7;' : 'background-color: #fef2f2; color: #b91c1c; border-color: #fee2e2;')))"></span>
+                    </td>
+                    <td class="text-center">
+                        <a th:href="@{/admin/order/detail/{id}(id=${o.id})}" class="btn btn-sm rounded-2 text-decoration-none px-3" style="background-color: #faf5ef; color: #2d251e; border: 1px solid #e5dacb; font-size: 11px; font-weight: 600;">
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

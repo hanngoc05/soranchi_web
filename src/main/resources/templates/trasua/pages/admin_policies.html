@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-2">
+    <div class="mb-4">
+        <h5 class="fw-bold text-dark font-monospace mb-1">📜 ĐIỀU KHOẢN VÀ CHÍNH SÁCH CỬA HÀNG</h5>
+        <p class="small text-muted m-0">Quản lý nội dung hiển thị pháp lý và chính sách bán hàng của hệ thống</p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card p-3 border shadow-sm bg-white rounded-3">
+                <h6 class="fw-bold text-dark font-monospace border-bottom pb-2 mb-3">Cập nhật nội dung</h6>
+                <form th:action="@{/admin/policy/save}" method="post" id="policyForm">
+                    <input type="hidden" name="id" id="policyId">
+                    <div class="mb-3">
+                        <label class="small fw-medium mb-1">Tiêu đề chính sách</label>
+                        <input type="text" name="title" id="policyTitle" class="form-control form-control-sm rounded-2" required placeholder="Ví dụ: Chính sách bảo mật">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-medium mb-1">Nội dung văn bản</label>
+                        <textarea name="content" id="policyContent" rows="6" class="form-control form-control-sm rounded-2" required placeholder="Nhập văn bản chi tiết chính sách vào đây..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm w-100 text-white font-monospace fw-bold" style="background-color: #2d251e;">💾 LƯU CHÍNH SÁCH</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card p-3 border shadow-sm bg-white rounded-3">
+                <h6 class="fw-bold text-dark font-monospace border-bottom pb-2 mb-3">Các văn bản hiện hành</h6>
+                <div class="table-responsive small">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Tiêu đề</th>
+                                <th>Nội dung tóm tắt</th>
+                                <th class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${policies}">
+                                <td class="fw-bold" th:text="${p.title}"></td>
+                                <td class="text-truncate text-muted" style="max-width: 200px;" th:text="${p.content}"></td>
+                                <td class="text-center">
+                                    <button class="btn btn-xs btn-outline-dark me-1" 
+                                            th:onclick="'editPolicy(' + ${p.id} + ', \'' + ${p.title} + '\', \'' + ${p.content} + '\')'">Sửa</button>
+                                    <a th:href="@{/admin/policy/delete/{id}(id=${p.id})}" class="btn btn-xs btn-outline-danger" onclick="return confirm('Xóa chính sách này?')">Xóa</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function editPolicy(id, title, content) {
+            document.getElementById('policyId').value = id;
+            document.getElementById('policyTitle').value = title;
+            document.getElementById('policyContent').value = content;
+        }
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-dark m-0" style="border-left: 4px solid #d4a017; padding-left: 8px;">⚙️ QUẢN TRỊ KHUYẾN MẠI</h4>
+        <button class="btn btn-sm btn-dark text-warning border border-warning fw-bold" data-bs-toggle="modal" data-bs-target="#addPromoModal">➕ TẠO KHUYẾN MẠI</button>
+    </div>
+    
+    <div class="card border-0 shadow-sm rounded bg-white overflow-hidden">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th class="ps-3 py-3">Mã Code</th>
+                    <th>Tiêu đề</th>
+                    <th>Mức giảm</th>
+                    <th>Nội dung chi tiết</th>
+                    <th>Hạn dùng</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(promotions)}">
+                    <td colspan="7" class="text-center py-4 text-muted">Hiện chưa có chương trình khuyến mại nào trong hệ thống.</td>
+                </tr>
+                <tr th:each="p : ${promotions}">
+                    <td class="ps-3 fw-bold text-primary font-monospace text-uppercase" th:text="${p.code}"></td>
+                    <td class="fw-bold text-dark" th:text="${p.title}"></td>
+                    <td class="fw-bold text-danger" th:text="${p.discountPercent} + '%'"></td>
+                    <td class="text-muted" th:text="${p.description}"></td>
+                    <td>
+                        <span class="d-block text-secondary text-xs" th:text="'Từ: ' + ${p.startDate}"></span>
+                        <span class="d-block text-danger text-xs" th:text="'Đến: ' + ${p.endDate}"></span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${p.isExpired()}" class="badge bg-secondary">Hết hạn</span>
+                        <span th:unless="${p.isExpired()}" th:class="${p.isActive} ? 'badge bg-success' : 'badge bg-warning text-dark'" th:text="${p.isActive} ? 'Đang chạy' : 'Đang dừng'"></span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a th:href="@{/admin/promotion/toggle/{id}(id=${p.id})}" 
+                               th:class="${p.isActive} ? 'btn btn-xs btn-outline-danger' : 'btn btn-xs btn-outline-success'" 
+                               th:text="${p.isActive} ? '⏸ Dừng' : '▶ Bật'"></a>
+                            
+                            <a th:href="@{/admin/promotion/delete/{id}(id=${p.id})}" 
+                               class="btn btn-xs btn-danger text-white"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn chương trình khuyến mại này không?')">
+                                <i class="fas fa-trash-alt"></i> Xóa
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="addPromoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/admin/promotion/save}" method="post" class="modal-content border-0">
+                <div class="modal-header bg-dark text-white"><h6 class="modal-title text-warning fw-bold">🎁 PHÁT HÀNH KHUYẾN MẠI</h6></div>
+                <div class="modal-body p-3">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Mã khuyến mại (Nhập lúc thanh toán)</label>
+                        <input type="text" name="code" id="inputPromoCode" class="form-control form-control-sm text-uppercase font-monospace" placeholder="Ví dụ: CHAOPHE20" required>
+                    </div>
+                    <div class="mb-2"><label class="form-label small fw-bold">Tiêu đề chương trình</label><input type="text" name="title" class="form-control form-control-sm" required></div>
+                    <div class="mb-2"><label class="form-label small fw-bold">Mô tả ngắn</label><textarea name="description" class="form-control form-control-sm" rows="2" required></textarea></div>
+                    <div class="row">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Mức giảm (%)</label>
+                            <input type="number" name="discountPercent" min="1" max="100" class="form-control form-control-sm" placeholder="Ví dụ: 20" required>
+                        </div>
+                        <div class="col-4"><label class="form-label small fw-bold">Ngày tung ra</label><input type="date" name="startDate" class="form-control form-control-sm" required></div>
+                        <div class="col-4"><label class="form-label small fw-bold">Ngày kết thúc</label><input type="date" name="endDate" class="form-control form-control-sm" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-sm btn-warning w-100 fw-bold border border-dark">LƯU XUỐNG DATABASE</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Ép chữ tự động viết hoa và xóa khoảng trắng khi Admin gõ mã code
+    document.getElementById('inputPromoCode').addEventListener('input', function() {
+        this.value = this.value.toUpperCase().replace(/\s+/g, '');
+    });
+</script>
+</body>
+</html>

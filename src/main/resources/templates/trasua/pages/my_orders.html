@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="w-100 p-3">
+    <h4 class="fw-bold text-dark mb-4" style="border-left: 4px solid #d4a017; padding-left: 10px;">📋 ĐƠN HÀNG CỦA TÔI</h4>
+    
+    <div th:if="${#lists.isEmpty(orders)}" class="text-muted p-5 text-center bg-white border rounded-4 font-monospace">
+        Bạn chưa từng đặt đơn hàng nào tại hệ thống Soranchi Tea.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(orders)}" class="d-flex flex-column gap-3">
+        <div th:each="order : ${orders}" class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-4"
+             th:style="${order.status == 'CHỜ XÁC NHẬN'} ? 'border-color: #ff9800 !important' : (${order.status == 'HOÀN THÀNH'} ? 'border-color: #4caf50 !important' : 'border-color: #f44336 !important')">
+            
+            <div class="d-flex justify-content-between align-items-center pb-2 border-bottom opacity-75 small">
+                <div>
+                    <span class="fw-bold text-dark fs-6" th:text="'Đơn hàng #' + ${order.id}"></span>
+                    <span class="ms-2 text-secondary" th:text="'Ngày đặt: ' + ${#temporaryFolder != null ? order.createdAt : order.createdAt}"></span>
+                </div>
+                <span th:text="${order.status}" class="badge fw-bold px-2.5 py-1.5 rounded-pill"
+                      th:classappend="${order.status == 'CHỜ XÁC NHẬN'} ? 'bg-warning text-dark' : (${order.status == 'HOÀN THÀNH'} ? 'bg-success' : 'bg-danger')"></span>
+            </div>
+
+            <div class="py-3">
+                <div th:each="detail : ${detailRepo.findByOrderId(order.id)}" class="d-flex justify-content-between align-items-center mb-2 small text-dark">
+                    <div class="d-flex align-items-center gap-2">
+                        <img th:src="@{'/image/' + ${detail.imageUrl}}" alt="món" class="rounded object-fit-cover" style="width: 40px; height: 40px;">
+                        <div>
+                            <span class="fw-semibold d-block" th:text="${detail.productName}"></span>
+                            <span class="text-muted" th:text="'Số lượng: ' + ${detail.quantity}"></span>
+                        </div>
+                    </div>
+                    <span class="fw-bold text-secondary" th:text="${#numbers.formatDecimal(detail.price * detail.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <div>
+                    <span class="small text-muted">Tổng thanh toán: </span>
+                    <span class="fw-bold text-danger fs-5" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                </div>
+                <div>
+                    <a th:if="${order.status == 'CHỜ XÁC NHẬN'}" th:href="@{/order/cancel/{id}(id=${order.id})}" 
+                       class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn hàng</a>
+                    
+                    <a th:if="${order.status == 'HOÀN THÀNH'}" th:href="@{/product/{id}(id=1)}" 
+                       class="btn btn-sm btn-outline-success rounded-pill px-3">⭐ Viết đánh giá</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

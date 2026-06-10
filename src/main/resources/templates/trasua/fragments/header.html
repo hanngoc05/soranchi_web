@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header th:fragment="header">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <div class="header-container d-flex justify-content-between align-items-center w-100">
+
+        <div class="logo">
+            <a th:href="@{/}">
+                <span class="brand">Soranchi</span>
+            </a>
+        </div>
+
+        <nav class="nav-menu d-flex gap-4 mb-0">
+            <a th:href="@{/}">Trang chủ</a>
+            <a th:href="@{/products}">Sản phẩm</a>
+            <a th:href="@{/about}">Giới thiệu</a>
+            <a th:href="@{/contact}">Liên hệ</a>
+        </nav>
+
+        <div class="d-flex align-items-center gap-3">
+            
+            <form class="d-flex mb-0" th:action="@{/search}" method="get">
+                <input class="form-control me-2" type="search" name="keyword" 
+                       placeholder="Tìm trà sữa..." aria-label="Search">
+                <button class="btn btn-outline-warning" type="submit">Tìm</button>
+            </form>
+
+            <div class="actions d-flex align-items-center gap-3">
+                
+                <div th:if="${session.loggedInUser == null or session.loggedInUser.role != 'ADMIN'}" class="d-flex align-items-center gap-3">
+                    <a th:href="@{/order}" class="position-relative text-white">
+                        <i class="fas fa-shopping-cart fa-lg"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                            th:text="${@cartService.getItems() != null ? @cartService.getItems().size() : 0}">0</span>
+                    </a>
+                    <a th:href="@{/order}" class="order-btn">Đặt hàng</a>
+                </div>
+
+                <div th:if="${session.loggedInUser == null}">
+                    <a th:href="@{/login}" class="btn btn-sm btn-outline-light fw-bold" style="border-color: #d4a017; color: #d4a017;">Đăng nhập</a>
+                </div>
+
+                <div th:if="${session.loggedInUser != null}" class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center bg-dark px-3 py-1.5 rounded-pill border border-warning shadow-sm">
+                        <img th:src="@{'/avatar/' + ${session.loggedInUser.avatarUrl}}" 
+                             alt="User Avatar" 
+                             class="rounded-circle border border-2 border-warning"
+                             style="width: 35px; height: 35px; object-fit: cover; margin-right: 8px;">
+                        <span class="text-warning fw-bold small" th:text="${session.loggedInUser.fullName}">Tên người dùng</span>
+                    </div>
+                </div>
+
+            </div>       
+        </div>
+
+    </div>
+</header>
+
+</body>
+</html>

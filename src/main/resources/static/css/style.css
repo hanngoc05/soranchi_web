@@ -1,0 +1,191 @@
+/* --- TONE MÀU DINGTEA: Đen (#1a1a1a) & Vàng Gold (#d4a017) --- */
+body {
+    background-color: #f8f9fa; /* Nền xám nhạt cho nổi bật phần trắng */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* HEADER: Đổi sang nền đen chữ vàng/trắng */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 60px;
+    background-color: #1a1a1a; 
+    border-bottom: 3px solid #d4a017;
+}
+.logo .brand {
+    font-size: 28px;
+    font-weight: bold;
+    color: #d4a017;
+    text-decoration: none;
+    letter-spacing: 2px;
+}
+.nav-menu a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: white; /* Chữ trắng trên nền đen */
+    font-weight: 500;
+    transition: 0.3s;
+}
+.nav-menu a:hover {
+    color: #d4a017;
+}
+
+/* NÚT ĐẶT HÀNG */
+.order-btn {
+    background-color: #d4a017;
+    color: #1a1a1a;
+    padding: 8px 22px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+.order-btn:hover {
+    background-color: white;
+    color: #d4a017;
+}
+
+/* SIDEBAR MỚI */
+.sidebar-custom {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border: none;
+}
+.sidebar-title {
+    background-color: #1a1a1a;
+    color: #d4a017;
+    font-weight: bold;
+    text-align: center;
+    padding: 15px;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+}
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    transition: all 0.3s ease;
+}
+.list-group-item:hover {
+    background-color: #fffbf0;
+    color: #d4a017;
+    padding-left: 25px; /* Hiệu ứng thụt lùi khi di chuột */
+}
+
+/* --- CARD DANH SÁCH SẢN PHẨM --- */
+.product-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    height: 100%;
+}
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+}
+
+/* Bọc ảnh để tạo hiệu ứng hover hiện icon */
+.product-img-wrap {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    height: 250px;
+}
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+.product-img-wrap:hover .product-img {
+    transform: scale(1.1); /* Phóng to ảnh nhẹ */
+}
+
+/* Icon hiện lên khi di chuột vào ảnh */
+.icon-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    background: rgba(26, 26, 26, 0.8); /* Nền đen mờ */
+    color: #d4a017;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 24px;
+    transition: opacity 0.3s;
+}
+.product-img-wrap:hover .icon-overlay {
+    opacity: 1;
+}
+
+.product-info {
+    padding: 20px;
+    text-align: center;
+}
+.product-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+.product-price {
+    color: #d4a017;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+.btn-add-cart {
+    background-color: #1a1a1a;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 25px;
+    width: 100%;
+    font-weight: bold;
+    transition: 0.3s;
+}
+.btn-add-cart:hover {
+    background-color: #d4a017;
+    color: #1a1a1a;
+}
+    /* Nút thêm vào giỏ hàng kiểu hiện đại */
+    .btn-add-to-cart {
+        background-color: #1a1a1a;
+        color: #ffffff;
+        border: none;
+        border-radius: 25px; /* Bo tròn nút */
+        padding: 8px 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease; /* Hiệu ứng mượt mà */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .btn-add-to-cart:hover {
+        background-color: #d4a017; /* Đổi sang màu vàng thương hiệu khi di chuột */
+        color: #1a1a1a;
+        transform: translateY(-3px); /* Nhích nhẹ lên trên */
+        box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
+    }
+
+    .btn-add-to-cart i {
+        font-size: 1rem;
+    }
+
+    /* Hiệu ứng phóng to nhẹ cho toàn bộ thẻ sản phẩm */
+    .product-card:hover {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        transition: 0.3s;
+    }
