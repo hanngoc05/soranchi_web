@@ -690,7 +690,30 @@ public class LayoutController {
     // ==========================================
     // PHÂN HỆ KHÁCH HÀNG
     // ==========================================
+    // Thêm duy nhất hàm này vào LayoutController để hứng nút "TIẾN HÀNH THANH TOÁN" từ giao diện
+    @GetMapping("/checkout")
+    public String showCheckoutPage(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) return "redirect:/login"; // Chưa đăng nhập thì đá về login
+        if (cartService.getItems().isEmpty()) return "redirect:/order"; // Giỏ trống thì giữ ở giỏ hàng
 
+        // Giữ nguyên vẹn các hàm bốc dữ liệu gốc của bạn
+        double originalTotal = cartService.getTotalPrice();
+        double finalPrice = session.getAttribute("finalPrice") != null ? (double) session.getAttribute("finalPrice") : originalTotal;
+        double discountAmount = session.getAttribute("discountAmount") != null ? (double) session.getAttribute("discountAmount") : 0.0;
+
+        model.addAttribute("cartItems", cartService.getItems());
+        model.addAttribute("totalPrice", originalTotal);
+        model.addAttribute("discountAmount", discountAmount);
+        model.addAttribute("finalPrice", finalPrice);
+        model.addAttribute("user", user);
+
+        // Đổ vào cấu trúc layout bọc trang giống hệt các trang khác của bạn
+        model.addAttribute("pageTitle", "Thanh toán đơn hàng - Soranchi");
+        model.addAttribute("contentTemplate", "trasua/pages/checkout"); // Trỏ đến file checkout.html trong thư mục của bạn
+        model.addAttribute("contentFragment", "content");
+        return "layout";
+    }
     @PostMapping("/checkout/apply-coupon")
     public String applyCouponAction(@RequestParam("couponCode") String couponCode, 
                                HttpSession session, HttpServletRequest request) {
