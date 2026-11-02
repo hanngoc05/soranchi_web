@@ -16,42 +16,53 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // 1. Mở trang đăng nhập
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(Model model, HttpSession session) {
+        if (session.getAttribute("loggedInUser") != null) {
+            return "redirect:/";
+        }
         model.addAttribute("pageTitle", "Đăng nhập hệ thống");
         model.addAttribute("contentTemplate", "trasua/pages/login");
         model.addAttribute("contentFragment", "content");
         return "layout";
     }
 
-    // 2. Xử lý khi bấm nút Đăng nhập
     @PostMapping("/login")
     public String processLogin(@RequestParam("username") String username,
                                @RequestParam("password") String password,
-                               HttpSession session, Model model) {
+                               HttpSession session, 
+                               Model model) {
         
-        // Tìm user trong DB
         User user = userRepository.findByUsername(username);
         
-        // Kiểm tra pass (Nếu đúng thì lưu vào phiên làm việc Session)
         if (user != null && user.getPassword().equals(password)) {
+            // Chặn đăng nhập nếu tài khoản bị khóa
+            if (!user.isActive()) {
+                model.addAttribute("error", "Tài khoản của bạn đã bị khóa do vi phạm quy định!");
+                model.addAttribute("pageTitle", "Đăng nhập hệ thống");
+                model.addAttribute("contentTemplate", "trasua/pages/login");
+                model.addAttribute("contentFragment", "content");
+                return "layout";
+            }
+
             session.setAttribute("loggedInUser", user);
-            return "redirect:/"; // Thành công thì về trang chủ
+
+            if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+                return "redirect:/admin/orders";
+            }
+            return "redirect:/";
         }
         
-        // Thất bại thì báo lỗi
         model.addAttribute("error", "Sai tên đăng nhập hoặc mật khẩu!");
-        model.addAttribute("pageTitle", "Đăng nhập");
+        model.addAttribute("pageTitle", "Đăng nhập hệ thống");
         model.addAttribute("contentTemplate", "trasua/pages/login");
         model.addAttribute("contentFragment", "content");
         return "layout"; 
     }
 
-    // 3. Đăng xuất
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        session.removeAttribute("loggedInUser"); // Xóa phiên làm việc
-        return "redirect:/"; // Về trang chủ
+        session.removeAttribute("loggedInUser");
+        return "redirect:/";
     }
 }

@@ -34,7 +34,7 @@
                     <a th:href="@{/order}" class="position-relative text-white">
                         <i class="fas fa-shopping-cart fa-lg"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
-                            th:text="${@cartService.getItems() != null ? @cartService.getItems().size() : 0}">0</span>
+                              th:text="${cartCount}">0</span>
                     </a>
                     <a th:href="@{/order}" class="order-btn">Đặt hàng</a>
                 </div>

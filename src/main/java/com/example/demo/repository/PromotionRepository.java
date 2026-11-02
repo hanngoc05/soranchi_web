@@ -7,6 +7,8 @@ import java.util.List;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
-    // Hàm này để lấy danh sách khuyến mãi đang bật
     List<Promotion> findByIsActiveTrue();
+    
+    // Tìm kiếm khuyến mãi theo mã code
+    Promotion findByCode(String code);
 }

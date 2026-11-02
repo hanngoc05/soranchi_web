@@ -162,9 +162,15 @@ public class LayoutController {
     }
 
     @GetMapping("/order")
-    public String orderPage(Model model) {
-        model.addAttribute("cartItems", cartService.getItems());
-        model.addAttribute("totalPrice", cartService.getTotalPrice());
+    public String orderPage(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user != null) {
+            model.addAttribute("cartItems", cartService.getItems(user.getId()));
+            model.addAttribute("totalPrice", cartService.getTotalPrice(user.getId()));
+        } else {
+            model.addAttribute("cartItems", java.util.Collections.emptyList());
+            model.addAttribute("totalPrice", 0.0);
+        }
         model.addAttribute("pageTitle", "Giỏ hàng");
         model.addAttribute("contentTemplate", "trasua/pages/order");
         model.addAttribute("contentFragment", "content");
@@ -193,7 +199,8 @@ public class LayoutController {
                             @RequestParam(value = "options", required = false, defaultValue = "") String options, 
                             HttpSession session, 
                             HttpServletRequest request) {
-        if (session.getAttribute("loggedInUser") == null) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) {
             return "redirect:/login"; 
         }
 
@@ -212,7 +219,7 @@ public class LayoutController {
             }
 
             cartService.addItem(new CartItem(
-                product.getId(), customProductName, product.getImageUrl(), finalSinglePrice, quantity
+                user.getId(), product.getId(), customProductName, product.getImageUrl(), finalSinglePrice, quantity
             ));
         }
         
@@ -370,62 +377,148 @@ public class LayoutController {
         return "redirect:/admin/products"; 
     }
 
+// ==========================================
+    // KHU VỰC QUẢN TRỊ VIÊN: QUẢN LÝ KHUYẾN MẠI
+    // ==========================================
+
     @GetMapping("/admin/promotions")
     public String adminPromotions(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
 
-        model.addAttribute("promotions", promotionRepository.findAll());
+        try {
+            model.addAttribute("promotions", promotionRepository.findAll());
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể kết nối với cơ sở dữ liệu để lấy danh sách khuyến mãi!");
+        }
+
         model.addAttribute("pageTitle", "Hệ thống Quản lý Khuyến mại");
         model.addAttribute("contentTemplate", "trasua/pages/admin_promotions");
         model.addAttribute("contentFragment", "content");
         return "layout";
     }
 
+    // Bước 3.1 & 3.2: Xử lý Thêm mới hoặc Cập nhật khuyến mãi
     @PostMapping("/admin/promotion/save")
-    public String savePromotion(@RequestParam("code") String code,
+    public String savePromotion(@RequestParam(value = "id", required = false) Integer id,
+                                @RequestParam("code") String code,
                                 @RequestParam("title") String title,
                                 @RequestParam("description") String description,
                                 @RequestParam("discountPercent") int discountPercent,
-                                @RequestParam("startDate") String startDate,
-                                @RequestParam("endDate") String endDate,
-                                HttpSession session) {
+                                @RequestParam("startDate") String startDateStr,
+                                @RequestParam("endDate") String endDateStr,
+                                HttpSession session,
+                                org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
-
-        Promotion promo = new Promotion();
-        promo.setCode(code.toUpperCase().trim()); 
-        promo.setTitle(title);
-        promo.setDescription(description);
-        promo.setDiscountPercent(discountPercent);
-        promo.setImageUrl("noel.jpg"); 
-        promo.setStartDate(LocalDate.parse(startDate));
-        promo.setEndDate(LocalDate.parse(endDate));
-        promo.setActive(true); 
-
-        promotionRepository.save(promo);
-        return "redirect:/admin/promotions";
-    }
-
-    @GetMapping("/admin/promotion/toggle/{id}")
-    public String togglePromotion(@PathVariable("id") int id, HttpSession session) {
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
-
-        Promotion promo = promotionRepository.findById(id).orElse(null);
-        if (promo != null) {
-            promo.setActive(!promo.isActive());
-            promotionRepository.save(promo);
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
         }
+
+        try {
+            String cleanCode = code.toUpperCase().trim().replaceAll("\\s+", "");
+            LocalDate start = LocalDate.parse(startDateStr);
+            LocalDate end = LocalDate.parse(endDateStr);
+
+            // Luồng rẽ nhánh 1: Kiểm tra hợp lệ dữ liệu ngày bắt đầu < ngày kết thúc
+            if (start.isAfter(end)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi dữ liệu: Thời gian bắt đầu phải nhỏ hơn hoặc bằng thời gian kết thúc!");
+                return "redirect:/admin/promotions";
+            }
+
+            if (discountPercent < 1 || discountPercent > 100) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Mức giảm giá phải nằm trong khoảng từ 1% đến 100%!");
+                return "redirect:/admin/promotions";
+            }
+
+            // Luồng rẽ nhánh 2: Thêm mới mà mã code đã tồn tại
+            if (id == null) {
+                Promotion existingPromo = promotionRepository.findByCode(cleanCode);
+                if (existingPromo != null) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Thao tác bị từ chối: Mã khuyến mãi '" + cleanCode + "' đã tồn tại trên hệ thống!");
+                    return "redirect:/admin/promotions";
+                }
+            } else {
+                // Trường hợp sửa: kiểm tra nếu đổi mã sang một mã khác đã có sẵn
+                Promotion existingPromo = promotionRepository.findByCode(cleanCode);
+                if (existingPromo != null && existingPromo.getId() != id) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Mã khuyến mãi '" + cleanCode + "' đã thuộc về một chương trình khác!");
+                    return "redirect:/admin/promotions";
+                }
+            }
+
+            Promotion promo = (id != null) ? promotionRepository.findById(id).orElse(new Promotion()) : new Promotion();
+            promo.setCode(cleanCode);
+            promo.setTitle(title.trim());
+            promo.setDescription(description.trim());
+            promo.setDiscountPercent(discountPercent);
+            promo.setStartDate(start);
+            promo.setEndDate(end);
+            if (id == null) {
+                promo.setImageUrl("noel.jpg");
+                promo.setActive(true);
+            }
+
+            promotionRepository.save(promo);
+            redirectAttributes.addFlashAttribute("successMessage", (id == null ? "Thêm mới" : "Cập nhật") + " chương trình khuyến mại '" + cleanCode + "' thành công!");
+
+        } catch (Exception e) {
+            // Luồng rẽ nhánh 4: Lỗi cơ sở dữ liệu
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể lưu thông tin khuyến mại.");
+        }
+
         return "redirect:/admin/promotions";
     }
 
-    @GetMapping("/admin/promotion/delete/{id}")
-    public String deletePromotion(@PathVariable("id") int id, HttpSession session) {
+    // Bật / Tắt trạng thái hoạt động của khuyến mãi
+    @GetMapping("/admin/promotion/toggle/{id}")
+    public String togglePromotion(@PathVariable("id") int id, HttpSession session,
+                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
 
-        promotionRepository.deleteById(id);
+        try {
+            Promotion promo = promotionRepository.findById(id).orElse(null);
+            if (promo != null) {
+                promo.setActive(!promo.isActive());
+                promotionRepository.save(promo);
+                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái khuyến mại thành công!");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cơ sở dữ liệu! Không thể cập nhật trạng thái.");
+        }
+
+        return "redirect:/admin/promotions";
+    }
+
+    // Bước 3.3: Xóa khuyến mãi có kiểm tra điều kiện
+    @GetMapping("/admin/promotion/delete/{id}")
+    public String deletePromotion(@PathVariable("id") int id, HttpSession session,
+                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
+
+        try {
+            Promotion promo = promotionRepository.findById(id).orElse(null);
+            if (promo != null) {
+                // Luồng rẽ nhánh 3: Nếu khuyến mãi đang kích hoạt và chưa hết hạn thì từ chối xóa
+                if (promo.isActive() && !promo.isExpired()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thao tác: Chương trình khuyến mại '" + promo.getCode() + "' đang được kích hoạt sử dụng! Vui lòng tạm dừng (Pause) trước khi xóa.");
+                    return "redirect:/admin/promotions";
+                }
+                promotionRepository.deleteById(id);
+                redirectAttributes.addFlashAttribute("successMessage", "Xóa chương trình khuyến mại thành công!");
+            }
+        } catch (Exception e) {
+            // Luồng rẽ nhánh 4: Lỗi cơ sở dữ liệu
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu hoặc chương trình đang có dữ liệu liên kết! Không thể xóa.");
+        }
+
         return "redirect:/admin/promotions";
     }
 
@@ -543,7 +636,7 @@ public class LayoutController {
         return "redirect:/admin/policies";
     }
 
-    //TRUNG TÂM TIẾP NHẬN HỖ TRỢ & KHIẾU NẠI KHÁCH HÀNG
+    //TRUNG TÂM TIẾN NHẬN HỖ TRỢ & KHIẾU NẠI KHÁCH HÀNG
     @GetMapping("/admin/supports")
     public String adminSupports(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -690,39 +783,40 @@ public class LayoutController {
     // ==========================================
     // PHÂN HỆ KHÁCH HÀNG
     // ==========================================
-    // Thêm duy nhất hàm này vào LayoutController để hứng nút "TIẾN HÀNH THANH TOÁN" từ giao diện
     @GetMapping("/checkout")
     public String showCheckoutPage(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) return "redirect:/login"; // Chưa đăng nhập thì đá về login
-        if (cartService.getItems().isEmpty()) return "redirect:/order"; // Giỏ trống thì giữ ở giỏ hàng
+        if (user == null) return "redirect:/login"; 
+        if (cartService.getItems(user.getId()).isEmpty()) return "redirect:/order"; 
 
-        // Giữ nguyên vẹn các hàm bốc dữ liệu gốc của bạn
-        double originalTotal = cartService.getTotalPrice();
+        double originalTotal = cartService.getTotalPrice(user.getId());
         double finalPrice = session.getAttribute("finalPrice") != null ? (double) session.getAttribute("finalPrice") : originalTotal;
         double discountAmount = session.getAttribute("discountAmount") != null ? (double) session.getAttribute("discountAmount") : 0.0;
 
-        model.addAttribute("cartItems", cartService.getItems());
+        model.addAttribute("cartItems", cartService.getItems(user.getId()));
         model.addAttribute("totalPrice", originalTotal);
         model.addAttribute("discountAmount", discountAmount);
         model.addAttribute("finalPrice", finalPrice);
         model.addAttribute("user", user);
 
-        // Đổ vào cấu trúc layout bọc trang giống hệt các trang khác của bạn
         model.addAttribute("pageTitle", "Thanh toán đơn hàng - Soranchi");
-        model.addAttribute("contentTemplate", "trasua/pages/checkout"); // Trỏ đến file checkout.html trong thư mục của bạn
+        model.addAttribute("contentTemplate", "trasua/pages/checkout"); 
         model.addAttribute("contentFragment", "content");
         return "layout";
     }
+
     @PostMapping("/checkout/apply-coupon")
     public String applyCouponAction(@RequestParam("couponCode") String couponCode, 
                                HttpSession session, HttpServletRequest request) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) return "redirect:/login";
+
         Promotion promo = promotionRepository.findAll().stream()
             .filter(p -> p.getCode().equalsIgnoreCase(couponCode.trim()) && p.isActive() && !p.isExpired())
             .findFirst().orElse(null);
 
         if (promo != null) {
-            double originalTotal = cartService.getTotalPrice();
+            double originalTotal = cartService.getTotalPrice(user.getId());
             double discountAmount = originalTotal * (promo.getDiscountPercent() / 100.0);
             double finalPrice = originalTotal - discountAmount;
 
@@ -751,7 +845,7 @@ public class LayoutController {
                                HttpSession session, Model model) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) return "redirect:/login";
-        if (cartService.getItems().isEmpty()) return "redirect:/products";
+        if (cartService.getItems(user.getId()).isEmpty()) return "redirect:/products";
 
         Order order = new Order();
         order.setUserId(user.getId());
@@ -759,10 +853,10 @@ public class LayoutController {
         order.setPhone(phone);
         order.setAddress(address);
         order.setPaymentMethod(paymentMethod); 
-        order.setTotalPrice(session.getAttribute("finalPrice") != null ? (double) session.getAttribute("finalPrice") : cartService.getTotalPrice());
+        order.setTotalPrice(session.getAttribute("finalPrice") != null ? (double) session.getAttribute("finalPrice") : cartService.getTotalPrice(user.getId()));
         orderRepository.save(order);
 
-        for (CartItem item : cartService.getItems()) {
+        for (CartItem item : cartService.getItems(user.getId())) {
             OrderDetail detail = new OrderDetail();
             detail.setOrderId(order.getId());
             detail.setProductId(item.getProductId());
@@ -773,7 +867,7 @@ public class LayoutController {
             orderDetailRepository.save(detail);
         }
 
-        cartService.clear(); 
+        cartService.clear(user.getId()); 
         session.removeAttribute("appliedPromoCode");
         session.removeAttribute("discountAmount");
         session.removeAttribute("finalPrice");
@@ -842,10 +936,18 @@ public class LayoutController {
         return "redirect:/profile?success=true";
     }
 
-    @PostMapping("/cart/update")
-    public String updateCartQuantity(@RequestParam("id") int id, @RequestParam("action") String action) {
+@PostMapping("/cart/update")
+    public String updateCartQuantity(@RequestParam("id") int id, 
+                                     @RequestParam("action") String action,
+                                     HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
         CartItem item = cartItemRepository.findById(id).orElse(null);
-        if (item != null) {
+        // Chỉ cho phép cập nhật nếu món hàng này đúng là của User đang đăng nhập
+        if (item != null && item.getUserId() == user.getId()) {
             int newQty = action.equals("plus") ? item.getQuantity() + 1 : item.getQuantity() - 1;
             cartService.updateQuantity(id, newQty);
         }
@@ -853,8 +955,17 @@ public class LayoutController {
     }
 
     @GetMapping("/cart/remove/{id}")
-    public String removeFromCart(@PathVariable("id") int id) {
-        cartService.removeItem(id);
+    public String removeFromCart(@PathVariable("id") int id, HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        CartItem item = cartItemRepository.findById(id).orElse(null);
+        // Chỉ cho phép xóa nếu đúng là giỏ của User đang đăng nhập
+        if (item != null && item.getUserId() == user.getId()) {
+            cartService.removeItem(id);
+        }
         return "redirect:/order"; 
     }
 }

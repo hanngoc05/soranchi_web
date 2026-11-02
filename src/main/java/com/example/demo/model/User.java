@@ -3,7 +3,7 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "user") // ĐÃ SỬA: Đổi từ "users" thành "user" để đồng bộ dữ liệu
+@Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,19 +13,23 @@ public class User {
     private String password;
     private String phone;
     private String address;
+
     @Column(name = "full_name")
     private String fullName;
     
-    private String role; // Lưu 2 giá trị: "ADMIN" hoặc "USER" để khớp hệ thống sidebar
+    private String role; // "ADMIN" hoặc "USER"
 
     @Column(name = "avatar_url")
-    private String avatarUrl = "default-avatar.png"; // ĐÃ THÊM: Thuộc tính bốc file ảnh từ máy khách
+    private String avatarUrl = "default-avatar.png";
 
+    @Column(name = "active")
+    private boolean active = true;
 
-    // Constructor rỗng
+    @Column(name = "status")
+    private String status = "ACTIVE"; // "ACTIVE" hoặc "LOCKED"
+
     public User() {}
 
-    // Getters và Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     
@@ -42,9 +46,26 @@ public class User {
     public void setRole(String role) { this.role = role; }
 
     public String getPhone() { return phone; }
-public void setPhone(String phone) { this.phone = phone; }
-public String getAddress() { return address; }
-public void setAddress(String address) { this.address = address; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public void setActive(boolean active) { this.active = active; }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    // Đồng bộ trạng thái: trả về true nếu status khác "LOCKED"
+    public boolean isActive() {
+        return !"LOCKED".equalsIgnoreCase(this.status);
+    }
 }

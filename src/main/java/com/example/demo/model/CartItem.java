@@ -10,6 +10,9 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id; // Bắt buộc phải có ID riêng cho dòng trong giỏ hàng
     
+    @Column(name = "user_id")
+    private int userId; // Thêm để phân biệt giỏ hàng của từng khách hàng
+    
     private int productId;
     private String name;
     
@@ -29,8 +32,18 @@ public class CartItem {
         this.quantity = quantity;
     }
 
+    public CartItem(int userId, int productId, String name, String imageUrl, double price, int quantity) {
+        this.userId = userId;
+        this.productId = productId;
+        this.name = name;
+        this.imageUrl = imageUrl;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
     // --- GETTERS ---
     public int getId() { return id; }
+    public int getUserId() { return userId; }
     public int getProductId() { return productId; }
     public String getName() { return name; }
     public String getImageUrl() { return imageUrl; }
@@ -39,6 +52,7 @@ public class CartItem {
 
     // --- SETTERS ---
     public void setId(int id) { this.id = id; }
+    public void setUserId(int userId) { this.userId = userId; }
     public void setProductId(int productId) { this.productId = productId; }
     public void setName(String name) { this.name = name; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }

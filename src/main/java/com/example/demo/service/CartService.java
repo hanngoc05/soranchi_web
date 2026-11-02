@@ -4,6 +4,7 @@ import com.example.demo.model.CartItem;
 import com.example.demo.repository.CartItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
@@ -12,10 +13,14 @@ public class CartService {
     @Autowired
     private CartItemRepository cartItemRepository;
 
-    // 1. Thêm vào giỏ
+    // 1. Thêm vào giỏ (Tự nhận diện theo userId hoặc gọi cơ bản)
     public void addItem(CartItem newItem) {
-        // Kiểm tra xem món này có trong MySQL chưa
-        CartItem existingItem = cartItemRepository.findByProductId(newItem.getProductId());
+        CartItem existingItem = null;
+        if (newItem.getUserId() > 0) {
+            existingItem = cartItemRepository.findByUserIdAndProductId(newItem.getUserId(), newItem.getProductId());
+        } else {
+            existingItem = cartItemRepository.findByProductId(newItem.getProductId());
+        }
         
         if (existingItem != null) {
             // Có rồi thì cộng dồn số lượng
@@ -31,11 +36,23 @@ public class CartService {
     public List<CartItem> getItems() {
         return cartItemRepository.findAll();
     }
+
+    public List<CartItem> getItems(int userId) {
+        return cartItemRepository.findByUserId(userId);
+    }
     
     // 3. Tính tổng tiền
     public double getTotalPrice() {
         double total = 0;
         for (CartItem item : cartItemRepository.findAll()) {
+            total += item.getPrice() * item.getQuantity();
+        }
+        return total;
+    }
+
+    public double getTotalPrice(int userId) {
+        double total = 0;
+        for (CartItem item : cartItemRepository.findByUserId(userId)) {
             total += item.getPrice() * item.getQuantity();
         }
         return total;
@@ -50,11 +67,20 @@ public class CartService {
         return count;
     }
 
-    // 5. Tính năng XÓA 1 món khỏi giỏ (Mới thêm)
+    public int getCount(int userId) {
+        int count = 0;
+        for (CartItem item : cartItemRepository.findByUserId(userId)) {
+            count += item.getQuantity();
+        }
+        return count;
+    }
+
+    // 5. Tính năng XÓA 1 món khỏi giỏ
     public void removeItem(int id) {
         cartItemRepository.deleteById(id);
     }
-    // 6. CẬP NHẬT SỐ LƯỢNG (+ / -) -> ĐÂY CHÍNH LÀ HÀM BẠN ĐANG THIẾU
+
+    // 6. CẬP NHẬT SỐ LƯỢNG (+ / -)
     public void updateQuantity(int id, int qty) {
         CartItem item = cartItemRepository.findById(id).orElse(null);
         if (item != null) {
@@ -66,9 +92,14 @@ public class CartService {
             }
         }
     }
-    // 7. XÓA SẠCH GIỎ HÀNG 
+
+    // 7. XÓA SẠCH GIỎ HÀNG
     public void clear() {
-        cartItemRepository.deleteAll(); // Xóa sạch toàn bộ cốc trà sữa đang có trong bảng giỏ hàng
+        cartItemRepository.deleteAll();
     }
-    
+
+    @Transactional
+    public void clear(int userId) {
+        cartItemRepository.deleteByUserId(userId);
+    }
 }

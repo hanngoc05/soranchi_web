@@ -1,88 +1,240 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="w-100 p-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold text-dark m-0" style="border-left: 4px solid #d4a017; padding-left: 8px;">⚙️ QUẢN TRỊ KHUYẾN MẠI</h4>
-        <button class="btn btn-sm btn-dark text-warning border border-warning fw-bold" data-bs-toggle="modal" data-bs-target="#addPromoModal">➕ TẠO KHUYẾN MẠI</button>
-    </div>
+<div th:fragment="content" class="container-fluid py-4 px-3 px-md-4">
     
-    <div class="card border-0 shadow-sm rounded bg-white overflow-hidden">
-        <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-dark">
-                <tr>
-                    <th class="ps-3 py-3">Mã Code</th>
-                    <th>Tiêu đề</th>
-                    <th>Mức giảm</th>
-                    <th>Nội dung chi tiết</th>
-                    <th>Hạn dùng</th>
-                    <th class="text-center">Trạng thái</th>
-                    <th class="text-center">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:if="${#lists.isEmpty(promotions)}">
-                    <td colspan="7" class="text-center py-4 text-muted">Hiện chưa có chương trình khuyến mại nào trong hệ thống.</td>
-                </tr>
-                <tr th:each="p : ${promotions}">
-                    <td class="ps-3 fw-bold text-primary font-monospace text-uppercase" th:text="${p.code}"></td>
-                    <td class="fw-bold text-dark" th:text="${p.title}"></td>
-                    <td class="fw-bold text-danger" th:text="${p.discountPercent} + '%'"></td>
-                    <td class="text-muted" th:text="${p.description}"></td>
-                    <td>
-                        <span class="d-block text-secondary text-xs" th:text="'Từ: ' + ${p.startDate}"></span>
-                        <span class="d-block text-danger text-xs" th:text="'Đến: ' + ${p.endDate}"></span>
-                    </td>
-                    <td class="text-center">
-                        <span th:if="${p.isExpired()}" class="badge bg-secondary">Hết hạn</span>
-                        <span th:unless="${p.isExpired()}" th:class="${p.isActive} ? 'badge bg-success' : 'badge bg-warning text-dark'" th:text="${p.isActive} ? 'Đang chạy' : 'Đang dừng'"></span>
-                    </td>
-                    <td class="text-center">
-                        <div class="d-flex justify-content-center gap-2">
-                            <a th:href="@{/admin/promotion/toggle/{id}(id=${p.id})}" 
-                               th:class="${p.isActive} ? 'btn btn-xs btn-outline-danger' : 'btn btn-xs btn-outline-success'" 
-                               th:text="${p.isActive} ? '⏸ Dừng' : '▶ Bật'"></a>
-                            
-                            <a th:href="@{/admin/promotion/delete/{id}(id=${p.id})}" 
-                               class="btn btn-xs btn-danger text-white"
-                               onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn chương trình khuyến mại này không?')">
-                                <i class="fas fa-trash-alt"></i> Xóa
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Tiêu đề & Nút thêm mới -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h4 class="fw-bold text-dark mb-1 tracking-tight">Quản lý chương trình khuyến mãi</h4>
+            <p class="text-muted small mb-0">Theo dõi, phát hành và điều chỉnh các mã ưu đãi của hệ thống</p>
+        </div>
+        <button class="btn btn-dark btn-sm px-3 py-2 fw-semibold rounded-3 shadow-sm d-flex align-items-center gap-2" 
+                data-bs-toggle="modal" data-bs-target="#addPromoModal"
+                style="background-color: #1a1a1a; border-color: #1a1a1a;">
+            <i class="fas fa-plus text-warning" style="font-size: 0.8rem;"></i>
+            <span>Tạo khuyến mãi</span>
+        </button>
     </div>
 
+    <!-- Thông báo kết quả thao tác -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center" role="alert">
+        <i class="fas fa-check-circle me-2 text-success fs-6"></i>
+        <span class="fw-medium text-dark" th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.9rem;"></button>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-circle me-2 text-danger fs-6"></i>
+        <span class="fw-medium text-danger" th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.9rem;"></button>
+    </div>
+
+    <!-- Bảng danh sách khuyến mãi -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                <thead style="background-color: #f8fafc; border-bottom: 1px solid #eef2f6;">
+                    <tr class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                        <th class="ps-4 py-3">Mã Code</th>
+                        <th>Chương trình</th>
+                        <th>Mức giảm</th>
+                        <th>Nội dung áp dụng</th>
+                        <th>Thời gian áp dụng</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    <tr th:if="${#lists.isEmpty(promotions)}">
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-ticket-alt d-block mb-2 text-secondary opacity-50" style="font-size: 2rem;"></i>
+                            Chưa có chương trình khuyến mãi nào được phát hành.
+                        </td>
+                    </tr>
+                    <tr th:each="p : ${promotions}">
+                        <!-- Mã code dạng Coupon Card -->
+                        <td class="ps-4 py-3">
+                            <span class="badge text-dark font-monospace fw-bold px-2.5 py-1.5 rounded-2 border" 
+                                  style="background-color: #f8fafc; border-color: #e2e8f0 !important; font-size: 0.82rem; letter-spacing: 1px;"
+                                  th:text="${p.code}">
+                            </span>
+                        </td>
+
+                        <!-- Tiêu đề -->
+                        <td class="fw-bold text-dark" th:text="${p.title}"></td>
+
+                        <!-- Mức giảm -->
+                        <td>
+                            <span class="badge rounded-pill fw-bold" 
+                                  style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; font-size: 0.78rem;" 
+                                  th:text="'-' + ${p.discountPercent} + '%'">
+                            </span>
+                        </td>
+
+                        <!-- Mô tả ngắn -->
+                        <td class="text-secondary" style="max-width: 260px;" th:text="${p.description}"></td>
+
+                        <!-- Hạn dùng -->
+                        <td>
+                            <div class="d-flex flex-column gap-0.5" style="font-size: 0.78rem;">
+                                <span class="text-muted"><i class="far fa-calendar-alt me-1 text-secondary opacity-75"></i><span th:text="${p.startDate}"></span></span>
+                                <span class="text-dark fw-medium"><i class="fas fa-arrow-right me-1 text-muted opacity-50" style="font-size: 0.65rem;"></i><span th:text="${p.endDate}"></span></span>
+                            </div>
+                        </td>
+
+                        <!-- Trạng thái -->
+                        <td class="text-center">
+                            <span th:if="${p.isExpired()}" 
+                                  class="badge rounded-pill px-2.5 py-1 fw-normal" 
+                                  style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
+                                Hết hạn
+                            </span>
+                            <span th:unless="${p.isExpired()}" 
+                                  th:if="${p.isActive}" 
+                                  class="badge rounded-pill px-2.5 py-1 fw-medium"
+                                  style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
+                                • Đang chạy
+                            </span>
+                            <span th:unless="${p.isExpired()}" 
+                                  th:if="${!p.isActive}" 
+                                  class="badge rounded-pill px-2.5 py-1 fw-normal"
+                                  style="background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a;">
+                                Tạm dừng
+                            </span>
+                        </td>
+
+                        <!-- Nút thao tác tinh gọn -->
+                        <td class="text-end pe-4">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <!-- Nút Sửa -->
+                                <button type="button" class="btn btn-sm btn-light border-0 text-secondary rounded-2 px-2 py-1 action-btn" 
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#editPromoModal' + ${p.id}"
+                                        title="Chỉnh sửa">
+                                    <i class="far fa-edit"></i>
+                                </button>
+
+                                <!-- Nút Bật/Tắt -->
+                                <a th:href="@{/admin/promotion/toggle/{id}(id=${p.id})}" 
+                                   class="btn btn-sm btn-light border-0 rounded-2 px-2 py-1 action-btn"
+                                   th:classappend="${p.isActive} ? 'text-warning' : 'text-success'"
+                                   th:title="${p.isActive} ? 'Tạm dừng chạy' : 'Kích hoạt lại'">
+                                    <i th:class="${p.isActive} ? 'fas fa-pause' : 'fas fa-play'"></i>
+                                </a>
+
+                                <!-- Nút Xóa -->
+                                <a th:href="@{/admin/promotion/delete/{id}(id=${p.id})}" 
+                                   class="btn btn-sm btn-light border-0 text-danger rounded-2 px-2 py-1 action-btn"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi này? (Lưu ý: Không thể xóa khuyến mãi đang hoạt động)');"
+                                   title="Xóa khuyến mãi">
+                                    <i class="far fa-trash-alt"></i>
+                                </a>
+                            </div>
+
+                            <!-- Modal Chỉnh sửa Khuyến mại -->
+                            <div class="modal fade text-start" th:id="'editPromoModal' + ${p.id}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <form th:action="@{/admin/promotion/save}" method="post" class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                        <input type="hidden" name="id" th:value="${p.id}">
+                                        <div class="modal-header px-4 py-3 bg-light border-bottom">
+                                            <h6 class="modal-title fw-bold text-dark mb-0">Cập nhật chương trình khuyến mại</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold text-secondary">Mã khuyến mãi</label>
+                                                <input type="text" name="code" th:value="${p.code}" class="form-control rounded-3 font-monospace text-uppercase" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold text-secondary">Tiêu đề chương trình</label>
+                                                <input type="text" name="title" th:value="${p.title}" class="form-control rounded-3" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold text-secondary">Mô tả nội dung</label>
+                                                <textarea name="description" class="form-control rounded-3" rows="2" required th:text="${p.description}"></textarea>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-4">
+                                                    <label class="form-label small fw-semibold text-secondary">Mức giảm (%)</label>
+                                                    <input type="number" name="discountPercent" th:value="${p.discountPercent}" min="1" max="100" class="form-control rounded-3 text-center" required>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label small fw-semibold text-secondary">Ngày bắt đầu</label>
+                                                    <input type="date" name="startDate" th:value="${p.startDate}" class="form-control rounded-3" required>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label small fw-semibold text-secondary">Ngày kết thúc</label>
+                                                    <input type="date" name="endDate" th:value="${p.endDate}" class="form-control rounded-3" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer px-4 py-3 bg-light border-top d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-light btn-sm px-3 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Lưu thay đổi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Khuyến Mại Mới -->
     <div class="modal fade" id="addPromoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form th:action="@{/admin/promotion/save}" method="post" class="modal-content border-0">
-                <div class="modal-header bg-dark text-white"><h6 class="modal-title text-warning fw-bold">🎁 PHÁT HÀNH KHUYẾN MẠI</h6></div>
-                <div class="modal-body p-3">
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold">Mã khuyến mại (Nhập lúc thanh toán)</label>
-                        <input type="text" name="code" id="inputPromoCode" class="form-control form-control-sm text-uppercase font-monospace" placeholder="Ví dụ: CHAOPHE20" required>
+            <form th:action="@{/admin/promotion/save}" method="post" class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header px-4 py-3 bg-light border-bottom">
+                    <h6 class="modal-title fw-bold text-dark mb-0">Tạo mới chương trình ưu đãi</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Mã khuyến mãi (Nhập lúc thanh toán)</label>
+                        <input type="text" name="code" id="inputPromoCode" class="form-control rounded-3 font-monospace text-uppercase" placeholder="Ví dụ: CHAOPHE20" required>
                     </div>
-                    <div class="mb-2"><label class="form-label small fw-bold">Tiêu đề chương trình</label><input type="text" name="title" class="form-control form-control-sm" required></div>
-                    <div class="mb-2"><label class="form-label small fw-bold">Mô tả ngắn</label><textarea name="description" class="form-control form-control-sm" rows="2" required></textarea></div>
-                    <div class="row">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Tiêu đề chương trình</label>
+                        <input type="text" name="title" class="form-control rounded-3" placeholder="Ví dụ: Giảm giá mùa tựu trường" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Mô tả ngắn</label>
+                        <textarea name="description" class="form-control rounded-3" rows="2" placeholder="Ví dụ: Áp dụng cho đơn hàng trà sữa từ 50k..." required></textarea>
+                    </div>
+                    <div class="row g-2">
                         <div class="col-4">
-                            <label class="form-label small fw-bold">Mức giảm (%)</label>
-                            <input type="number" name="discountPercent" min="1" max="100" class="form-control form-control-sm" placeholder="Ví dụ: 20" required>
+                            <label class="form-label small fw-semibold text-secondary">Mức giảm (%)</label>
+                            <input type="number" name="discountPercent" min="1" max="100" class="form-control rounded-3 text-center" placeholder="20" required>
                         </div>
-                        <div class="col-4"><label class="form-label small fw-bold">Ngày tung ra</label><input type="date" name="startDate" class="form-control form-control-sm" required></div>
-                        <div class="col-4"><label class="form-label small fw-bold">Ngày kết thúc</label><input type="date" name="endDate" class="form-control form-control-sm" required></div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold text-secondary">Ngày bắt đầu</label>
+                            <input type="date" name="startDate" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold text-secondary">Ngày kết thúc</label>
+                            <input type="date" name="endDate" class="form-control rounded-3" required>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-sm btn-warning w-100 fw-bold border border-dark">LƯU XUỐNG DATABASE</button></div>
+                <div class="modal-footer px-4 py-3 bg-light border-top d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light btn-sm px-3 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Phát hành ngay</button>
+                </div>
             </form>
         </div>
     </div>
+
 </div>
 
+<style>
+    .tracking-tight { letter-spacing: -0.5px; }
+    .action-btn:hover { background-color: #f1f5f9 !important; }
+</style>
+
 <script>
-    // Ép chữ tự động viết hoa và xóa khoảng trắng khi Admin gõ mã code
     document.getElementById('inputPromoCode').addEventListener('input', function() {
         this.value = this.value.toUpperCase().replace(/\s+/g, '');
     });

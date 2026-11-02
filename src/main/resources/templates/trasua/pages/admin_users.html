@@ -1,0 +1,138 @@
+<div th:fragment="content" class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-uppercase">Quản lý tài khoản khách hàng</h3>
+        <span class="badge bg-secondary p-2" th:text="'Tổng số khách hàng: ' + ${customers != null ? customers.size() : 0}"></span>
+    </div>
+
+    <!-- Thông báo cập nhật trạng thái thành công (Bước 5) -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Thông báo lỗi kết nối CSDL (Luồng rẽ nhánh 3) -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Form tìm kiếm tài khoản (Luồng rẽ nhánh 1) -->
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <form th:action="@{/admin/users}" method="get" class="row g-2">
+                <div class="col-md-9">
+                    <input type="text" name="keyword" th:value="${keyword}" class="form-control" 
+                           placeholder="Nhập tên khách hàng cần tìm...">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Tìm kiếm</button>
+                    <a th:href="@{/admin/users}" class="btn btn-outline-secondary">Đặt lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cảnh báo không tìm thấy tài khoản (Luồng rẽ nhánh 1) -->
+    <div th:if="${searchNotFound}" class="alert alert-warning" role="alert">
+        <i class="fas fa-search me-2"></i>Không tìm thấy tài khoản khách hàng nào khớp với từ khóa. Vui lòng nhập lại!
+    </div>
+
+    <!-- Bảng danh sách tài khoản (Bước 1) -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 70px;">ID</th>
+                            <th>Họ và tên</th>
+                            <th>Tên đăng nhập</th>
+                            <th>Số điện thoại</th>
+                            <th>Địa chỉ</th>
+                            <th class="text-center" style="width: 130px;">Trạng thái</th>
+                            <th class="text-center" style="width: 200px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cust : ${customers}">
+                            <td class="text-center fw-bold" th:text="'#' + ${cust.id}"></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:src="@{'/avatar/' + ${cust.avatarUrl}}" 
+                                         class="rounded-circle me-2 border" 
+                                         width="36" height="36" 
+                                         style="object-fit: cover;"
+                                         onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';">
+                                    <span class="fw-semibold text-dark" th:text="${cust.fullName}"></span>
+                                </div>
+                            </td>
+                            <td th:text="${cust.username}"></td>
+                            <td th:text="${cust.phone != null and !cust.phone.isEmpty() ? cust.phone : 'Chưa cập nhật'}"></td>
+                            <td th:text="${cust.address != null and !cust.address.isEmpty() ? cust.address : 'Chưa cập nhật'}"></td>
+                            <td class="text-center">
+                                <span th:if="${cust.active}" class="badge bg-success">Hoạt động</span>
+                                <span th:unless="${cust.active}" class="badge bg-danger">Đã khóa</span>
+                            </td>
+                            <td class="text-center">
+                                <!-- Nút Xem chi tiết (Bước 2) -->
+                                <button type="button" class="btn btn-sm btn-outline-info me-1" 
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#detailModal' + ${cust.id}">
+                                    Chi tiết
+                                </button>
+
+                                <!-- Nút Khóa/Mở khóa với xác nhận Có/Không (Bước 3, 4 & Luồng rẽ nhánh 2) -->
+                                <a th:if="${cust.active}" 
+                                   th:href="@{'/admin/users/toggle-status/' + ${cust.id}}" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Bạn có chắc chắn muốn KHÓA tài khoản này không? Chọn OK/Có để xác nhận, Cancel/Không để hủy.');">
+                                    Khóa
+                                </a>
+                                <a th:unless="${cust.active}" 
+                                   th:href="@{'/admin/users/toggle-status/' + ${cust.id}}" 
+                                   class="btn btn-sm btn-outline-success" 
+                                   onclick="return confirm('Bạn có chắc chắn muốn MỞ KHÓA tài khoản này không? Chọn OK/Có để xác nhận, Cancel/Không để hủy.');">
+                                    Mở khóa
+                                </a>
+
+                                <!-- Modal hiển thị chi tiết thông tin tài khoản (Bước 2) -->
+                                <div class="modal fade" th:id="'detailModal' + ${cust.id}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Chi tiết tài khoản #<span th:text="${cust.id}"></span></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="text-center mb-3">
+                                                    <img th:src="@{'/avatar/' + ${cust.avatarUrl}}" 
+                                                         class="rounded-circle border" width="80" height="80" style="object-fit: cover;"
+                                                         onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';">
+                                                    <h5 class="mt-2 fw-bold text-dark" th:text="${cust.fullName}"></h5>
+                                                </div>
+                                                <p class="mb-1"><strong>Tên đăng nhập:</strong> <span th:text="${cust.username}"></span></p>
+                                                <p class="mb-1"><strong>Số điện thoại:</strong> <span th:text="${cust.phone != null and !cust.phone.isEmpty() ? cust.phone : 'Chưa cập nhật'}"></span></p>
+                                                <p class="mb-1"><strong>Địa chỉ:</strong> <span th:text="${cust.address != null and !cust.address.isEmpty() ? cust.address : 'Chưa cập nhật'}"></span></p>
+                                                <p class="mb-1"><strong>Vai trò:</strong> <span class="badge bg-primary" th:text="${cust.role}"></span></p>
+                                                <p class="mb-1"><strong>Trạng thái:</strong> 
+                                                    <span th:if="${cust.active}" class="badge bg-success">Đang hoạt động</span>
+                                                    <span th:unless="${cust.active}" class="badge bg-danger">Bị khóa</span>
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${customers == null or customers.isEmpty()}">
+                            <td colspan="7" class="text-center py-4 text-muted">Không có dữ liệu tài khoản khách hàng nào.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
