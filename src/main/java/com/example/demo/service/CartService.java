@@ -13,7 +13,7 @@ public class CartService {
     @Autowired
     private CartItemRepository cartItemRepository;
 
-    // 1. Thêm vào giỏ (Tự nhận diện theo userId hoặc gọi cơ bản)
+    // 1. Thêm vào giỏ
     public void addItem(CartItem newItem) {
         CartItem existingItem = null;
         if (newItem.getUserId() > 0) {
@@ -23,16 +23,14 @@ public class CartService {
         }
         
         if (existingItem != null) {
-            // Có rồi thì cộng dồn số lượng
             existingItem.setQuantity(existingItem.getQuantity() + newItem.getQuantity());
-            cartItemRepository.save(existingItem); // Lệnh UPDATE
+            cartItemRepository.save(existingItem);
         } else {
-            // Chưa có thì lưu mới
-            cartItemRepository.save(newItem); // Lệnh INSERT
+            cartItemRepository.save(newItem);
         }
     }
 
-    // 2. Lấy toàn bộ giỏ hàng
+    // 2. Lấy danh sách món trong giỏ
     public List<CartItem> getItems() {
         return cartItemRepository.findAll();
     }
@@ -58,34 +56,26 @@ public class CartService {
         return total;
     }
     
-    // 4. Đếm tổng số ly trà sữa
+    // 4. Đếm số loại đồ uống (trả về số dòng sản phẩm, ví dụ: 2 loại trả về 2)
     public int getCount() {
-        int count = 0;
-        for (CartItem item : cartItemRepository.findAll()) {
-            count += item.getQuantity();
-        }
-        return count;
+        return cartItemRepository.findAll().size();
     }
 
     public int getCount(int userId) {
-        int count = 0;
-        for (CartItem item : cartItemRepository.findByUserId(userId)) {
-            count += item.getQuantity();
-        }
-        return count;
+        return cartItemRepository.findByUserId(userId).size();
     }
 
-    // 5. Tính năng XÓA 1 món khỏi giỏ
+    // 5. Xóa 1 món khỏi giỏ
     public void removeItem(int id) {
         cartItemRepository.deleteById(id);
     }
 
-    // 6. CẬP NHẬT SỐ LƯỢNG (+ / -)
+    // 6. Cập nhật số lượng (+ / -)
     public void updateQuantity(int id, int qty) {
         CartItem item = cartItemRepository.findById(id).orElse(null);
         if (item != null) {
             if (qty <= 0) {
-                cartItemRepository.deleteById(id); // Giảm về 0 thì tự động xóa luôn
+                cartItemRepository.deleteById(id);
             } else {
                 item.setQuantity(qty);
                 cartItemRepository.save(item);
@@ -93,7 +83,7 @@ public class CartService {
         }
     }
 
-    // 7. XÓA SẠCH GIỎ HÀNG
+    // 7. Xóa sạch giỏ hàng
     public void clear() {
         cartItemRepository.deleteAll();
     }

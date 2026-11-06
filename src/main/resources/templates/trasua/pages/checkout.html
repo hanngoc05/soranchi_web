@@ -2,194 +2,358 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<div th:fragment="content" class="container py-5">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<div th:fragment="content" class="container py-4">
 
-    <div class="row">
-        <div class="col-md-7">
-            <div class="card shadow-sm border-0 rounded-4">
-                <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4 border-bottom pb-2 text-dark"><i class="fas fa-truck me-2 text-warning"></i>THÔNG TIN GIAO HÀNG</h4>
+    <!-- Khung thông báo lỗi / thành công động -->
+    <div id="checkout-alert-error" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 py-3 px-4 small d-flex align-items-center mb-4 d-none" role="alert">
+        <i class="fas fa-exclamation-circle me-3 text-danger fs-5"></i>
+        <div class="flex-grow-1 fw-medium text-danger" id="checkout-error-text"></div>
+        <button type="button" class="btn-close" onclick="document.getElementById('checkout-alert-error').classList.add('d-none')" aria-label="Close"></button>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Thông tin nhận hàng & Hình thức thanh toán -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4">
+                <h5 class="fw-bold mb-4 pb-2 border-bottom text-dark" style="letter-spacing: -0.3px;">
+                    <i class="fas fa-shipping-fast me-2 text-warning"></i>Thông tin nhận hàng
+                </h5>
+                
+                <form id="form-checkout-soranchi" onsubmit="return false;">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Họ và tên người nhận <span class="text-danger">*</span></label>
+                        <input type="text" name="fullName" id="customer-name" 
+                               th:value="${user != null ? user.fullName : ''}" 
+                               class="form-control rounded-3 py-2" placeholder="Ví dụ: Vũ Ngọc Hân" required>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" name="phone" id="customer-phone" 
+                                   th:value="${user != null and user.phone != null ? user.phone : ''}" 
+                                   class="form-control rounded-3 font-monospace py-2" placeholder="0xxxxxxxxx" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold small text-secondary">Email nhận thông báo</label>
+                            <input type="email" name="email" id="customer-email" 
+                                   class="form-control rounded-3 py-2" placeholder="example@gmail.com">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Địa chỉ giao hàng chi tiết <span class="text-danger">*</span></label>
+                        <textarea name="address" id="customer-address" class="form-control rounded-3" rows="2" 
+                                  placeholder="Số nhà, tên ngõ/đường, phường/xã..." th:text="${user != null ? user.address : ''}" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">Ghi chú cho quán</label>
+                        <textarea name="note" id="customer-note" class="form-control rounded-3" rows="2" 
+                                  placeholder="Ví dụ: Ít đá, giao vào giờ nghỉ trưa..."></textarea>
+                    </div>
                     
-                    <form th:action="@{/checkout/submit}" method="post" id="form-checkout-soranchi">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">Họ và tên người nhận</label>
-                            <input type="text" name="fullName" th:value="${userProfile != null ? userProfile.fullName : ''}" class="form-control" placeholder="Nhập họ tên người nhận" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">Số điện thoại</label>
-                                <input type="text" name="phone" id="customer-phone" th:value="${userProfile != null ? userProfile.phone : ''}" class="form-control" placeholder="09xxxxxxxx" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">Email (không bắt buộc)</label>
-                                <input type="email" name="email" class="form-control" placeholder="example@gmail.com">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">Địa chỉ giao hàng</label>
-                            <textarea name="address" class="form-control" rows="3" placeholder="Số nhà, tên đường, phường/xã..." th:text="${userProfile != null ? userProfile.address : ''}" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">Ghi chú đơn hàng</label>
-                            <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Ít đường, nhiều đá..."></textarea>
-                        </div>
-                        
-                        <h5 class="fw-bold mt-4 mb-3 text-dark"><i class="fas fa-credit-card me-2 text-warning"></i>PHƯƠNG THỨC THANH TOÁN</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="paymentMethod" value="COD" id="pay-cod" checked>
-                            <label class="form-check-label fw-medium" for="pay-cod">Thanh toán khi nhận hàng (COD)</label>
-                        </div>
-                        <div class="form-check mb-4">
-                            <input class="form-check-input" type="radio" name="paymentMethod" value="BANK" id="pay-bank">
-                            <label class="form-check-label fw-medium" for="pay-bank">Chuyển khoản ngân hàng (Quét mã VietQR)</label>
-                        </div>
+                    <h5 class="fw-bold mt-4 mb-3 text-dark border-bottom pb-2" style="letter-spacing: -0.3px;">
+                        <i class="fas fa-wallet me-2 text-warning"></i>Phương thức thanh toán
+                    </h5>
 
-                        <button type="submit" class="btn btn-warning w-100 fw-bold py-3 fs-5 border border-dark rounded-3 shadow-sm text-dark">ĐẶT HÀNG NGAY</button>
-                    </form>
-                </div>
+                    <!-- Phương thức COD -->
+                    <div class="border rounded-3 p-3 mb-2 bg-light d-flex align-items-center">
+                        <input class="form-check-input me-3" type="radio" name="paymentMethod" value="COD" id="pay-cod" checked style="cursor: pointer;">
+                        <label class="form-check-label fw-medium text-dark flex-grow-1" for="pay-cod" style="cursor: pointer;">
+                            <i class="fas fa-money-bill-wave text-success me-2"></i>Thanh toán khi nhận hàng (COD)
+                            <span class="d-block text-muted small fw-normal">Thanh toán bằng tiền mặt khi shipper giao đồ uống</span>
+                        </label>
+                    </div>
+
+                    <!-- Phương thức VietQR -->
+                    <div class="border rounded-3 p-3 mb-4 bg-light d-flex align-items-center">
+                        <input class="form-check-input me-3" type="radio" name="paymentMethod" value="BANK" id="pay-bank" style="cursor: pointer;">
+                        <label class="form-check-label fw-medium text-dark flex-grow-1" for="pay-bank" style="cursor: pointer;">
+                            <i class="fas fa-qrcode text-primary me-2"></i>Thanh toán trực tuyến (Quét mã VietQR)
+                            <span class="d-block text-muted small fw-normal">Hệ thống tạo mã QR động kèm xác nhận giao dịch</span>
+                        </label>
+                    </div>
+
+                    <button type="button" id="btn-submit-main" class="btn btn-dark w-100 fw-semibold py-3 rounded-3 shadow-sm d-flex justify-content-center align-items-center gap-2">
+                        <span>Hoàn tất đặt hàng</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
             </div>
         </div>
 
-        <div class="col-md-5">
-            <div class="card border-0 shadow-sm p-4 bg-white rounded-4 mb-3">
-                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-ticket-alt me-2 text-danger"></i>Mã khuyến mại (Voucher)</h5>
+        <!-- Cột phải: Voucher & Tóm tắt đơn hàng -->
+        <div class="col-lg-5">
+            <!-- Voucher -->
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-4 mb-4">
+                <h6 class="fw-bold text-dark mb-2"><i class="fas fa-ticket-alt me-2 text-danger"></i>Mã ưu đãi / Khuyến mãi</h6>
                 <form th:action="@{/checkout/apply-coupon}" method="post" class="d-flex gap-2">
-                    <input type="text" name="couponCode" class="form-control font-monospace text-uppercase" 
-                           th:value="${session.appliedPromoCode}" placeholder="Nhập mã ví dụ: NAMMOI20" required>
-                    <button type="submit" class="btn btn-dark text-warning border-0 fw-bold px-3">Áp dụng</button>
+                    <input type="text" name="couponCode" class="form-control rounded-3 font-monospace text-uppercase" 
+                           th:value="${session.appliedPromoCode}" placeholder="Nhập mã ví dụ: NOEL20" required>
+                    <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Áp dụng</button>
                 </form>
-                <div th:if="${session.promoError}" class="text-danger small mt-2 fw-semibold" th:text="${session.promoError}"></div>
+                <div th:if="${session.promoError}" class="text-danger small mt-2 fw-medium" th:text="${session.promoError}"></div>
+                <div th:if="${session.appliedPromoCode}" class="text-success small mt-2 fw-medium">
+                    <i class="fas fa-check-circle me-1"></i>Đã áp dụng mã ưu đãi thành công!
+                </div>
             </div>
 
-            <div class="card shadow-sm border-0 bg-light rounded-4">
-                <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4 border-bottom pb-2 text-dark">ĐƠN HÀNG CỦA BẠN</h4>
-                    <div class="order-items overflow-auto" style="max-height: 250px;">
-                        <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                            <img th:src="@{'/image/' + ${item.imageUrl}}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
-                            <div class="ms-3 flex-grow-1">
-                                <div class="fw-bold text-dark small" th:text="${item.name}">Tên sản phẩm</div>
-                                <div class="small text-muted">Số lượng: <span th:text="${item.quantity}">1</span></div>
-                            </div>
-                            <div class="fw-bold text-danger small" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</div>
+            <!-- Tóm tắt đơn hàng -->
+            <div class="card shadow-sm border-0 bg-white rounded-4 p-4">
+                <h6 class="fw-bold mb-3 border-bottom pb-2 text-dark">
+                    Đơn hàng của bạn (<span th:text="${#lists.size(cartItems)}"></span> món)
+                </h6>
+                <div class="order-items overflow-auto pe-1" style="max-height: 240px;">
+                    <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                        <img th:src="${item.imageUrl != null and (item.imageUrl.startsWith('http://') or item.imageUrl.startsWith('https://')) ? item.imageUrl : ('/image/' + item.imageUrl)}" 
+                             class="rounded-3 border" width="48" height="48" style="object-fit: cover;"
+                             onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
+                        <div class="ms-3 flex-grow-1">
+                            <div class="fw-bold text-dark small" th:text="${item.name}"></div>
+                            <div class="text-muted" style="font-size: 0.78rem;">Số lượng: <span class="fw-semibold text-dark" th:text="${item.quantity}"></span></div>
                         </div>
+                        <div class="fw-bold text-dark small" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</div>
+                    </div>
+                </div>
+                
+                <div class="mt-3 pt-2">
+                    <div class="d-flex justify-content-between mb-2 small text-secondary">
+                        <span>Tạm tính tiền món:</span>
+                        <span class="text-dark fw-medium" th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                     </div>
                     
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between mb-2 small text-secondary">
-                            <span>Tạm tính hàng:</span>
-                            <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
-                        </div>
-                        
-                        <div th:if="${session.appliedPromoCode != null}" class="d-flex justify-content-between mb-2 small text-success fw-bold">
-                            <span th:text="'Khuyến mại đã áp (' + ${session.discountPercent} + '%):'">Giảm giá:</span>
-                            <span th:text="'- ' + ${#numbers.formatDecimal(session.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">-0đ</span>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between mb-2 small text-secondary">
-                            <span>Phí vận chuyển:</span>
-                            <span>Miễn phí</span>
-                        </div>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold text-dark m-0">TỔNG CỘNG:</h5>
-                            <h5 class="fw-bold text-danger fs-4 m-0" id="checkout-total-price" 
-                                th:data-raw-price="${session.finalPrice != null ? session.finalPrice : totalPrice}" 
-                                th:text="${session.finalPrice != null} ? ${#numbers.formatDecimal(session.finalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ' : ${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</h5>
-                        </div>
+                    <div th:if="${session.appliedPromoCode != null}" class="d-flex justify-content-between mb-2 small text-success fw-bold">
+                        <span th:text="'Khuyến mãi đã áp (' + ${session.discountPercent} + '%):'"></span>
+                        <span th:text="'- ' + ${#numbers.formatDecimal(session.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2 small text-secondary">
+                        <span>Phí vận chuyển:</span>
+                        <span class="text-success fw-medium">Miễn phí</span>
+                    </div>
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark">Tổng tiền thanh toán:</span>
+                        <span class="fw-bold text-danger fs-4" id="checkout-total-price" 
+                              th:text="${session.finalPrice != null ? #numbers.formatDecimal(session.finalPrice, 0, 'COMMA', 0, 'POINT') : #numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="vietqrModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="vietqrModalLabel" aria-hidden="true">
+    <!-- Modal Quét Mã VietQR -->
+    <div class="modal fade" id="vietqrModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-                <div class="modal-header border-bottom-0 pb-0 justify-content-center position-relative">
-                    <h5 class="modal-title fw-bold text-dark mt-2" id="vietqrModalLabel">📱 CHUYỂN KHOẢN QUA MÃ VIETQR</h5>
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header px-4 py-3 bg-light border-bottom">
+                    <h6 class="modal-title fw-bold text-dark mb-0">
+                        <i class="fas fa-qrcode text-primary me-2"></i>Thanh toán trực tuyến VietQR
+                    </h6>
+                    <button type="button" class="btn-close" id="btn-close-qr-modal" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center py-4">
-                    <p class="text-muted small mb-3">Sử dụng App Ngân hàng bất kỳ để quét mã tự động điền tiền</p>
-                    <div class="mx-auto p-3 border rounded-4 bg-white shadow-sm mb-3" style="width: 240px; height: 240px;">
-                        <img id="vietqr-image-placeholder" src="" alt="Mã QR Thanh Toán" class="img-fluid w-100 h-100" style="object-fit: contain;">
+                <div class="modal-body text-center p-4">
+                    <p class="text-muted small mb-3">Mở app Ngân hàng bất kỳ để quét mã QR thanh toán</p>
+                    <div class="mx-auto p-2 border rounded-4 bg-white shadow-sm mb-3" style="width: 220px; height: 220px;">
+                        <img id="vietqr-image-placeholder" src="" alt="Mã VietQR" class="img-fluid w-100 h-100" style="object-fit: contain;">
                     </div>
-                    <div class="bg-light rounded-3 p-3 mx-2 text-start mb-2" style="font-size: 0.95rem;">
+                    
+                    <div class="bg-light rounded-3 p-3 text-start small mb-3 border">
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Chủ tài khoản:</span>
+                            <span class="text-secondary">Ngân hàng:</span>
+                            <span class="fw-bold text-dark">Vietcombank (VCB)</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-secondary">Chủ tài khoản:</span>
                             <span class="fw-bold text-dark">VU NGOC HAN</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Số tiền cần trả:</span>
-                            <span class="fw-bold text-danger" id="qr-modal-amount">0đ</span>
+                            <span class="text-secondary">Số tiền:</span>
+                            <span class="fw-bold text-danger fs-6" id="qr-modal-amount">0đ</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted">Nội dung CK:</span>
-                            <span class="fw-bold text-primary font-monospace" id="qr-modal-info">SORANCHI</span>
+                            <span class="text-secondary">Nội dung chuyển khoản:</span>
+                            <span class="fw-bold text-primary font-monospace" id="qr-modal-info">SRC</span>
                         </div>
                     </div>
-                    <div class="text-warning bg-dark p-2 rounded-3 mx-2 small fw-bold" style="font-size: 11px;">
-                        ⚠️ Giữ nguyên nội dung chuyển khoản để hệ thống tự động duyệt đơn nhanh nhất!
-                    </div>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm border border-dark" id="btn-confirm-payment" style="border-radius: 8px;">
-                        ✅ Tôi đã chuyển khoản thành công
+
+                    <!-- Nút xác nhận thủ công cho người dùng / khi demo -->
+                    <button type="button" class="btn btn-success w-100 fw-bold py-2.5 rounded-3 shadow-sm mb-2" id="btn-confirm-payment">
+                        <i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản
                     </button>
+                    
+                    <div class="text-muted" style="font-size: 11px;">
+                        Hệ thống sẽ cập nhật trạng thái đơn hàng ngay khi nhận được xác nhận thanh toán.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Script điều khiển -->
     <script>
-        (function() {
-            const formCheckout = document.getElementById('form-checkout-soranchi');
-            const vietqrModalElement = document.getElementById('vietqrModal');
-            
-            if (!formCheckout || !vietqrModalElement) return;
-            
-            const vietqrModal = new bootstrap.Modal(vietqrModalElement);
-            const qrImage = document.getElementById('vietqr-image-placeholder');
-            const qrAmountText = document.getElementById('qr-modal-amount');
-            const qrInfoText = document.getElementById('qr-modal-info');
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnSubmit = document.getElementById('btn-submit-main');
+            const alertBox = document.getElementById('checkout-alert-error');
+            const errorText = document.getElementById('checkout-error-text');
             const btnConfirmPayment = document.getElementById('btn-confirm-payment');
+            const modalEl = document.getElementById('vietqrModal');
 
-            formCheckout.addEventListener('submit', function(e) {
-                const isBankPayment = document.getElementById('pay-bank').checked;
-                
-                if (isBankPayment) {
-                    e.preventDefault(); // Chặn form để hiện QR
-                    
-                    const totalPriceElement = document.getElementById('checkout-total-price');
-                    const amount = totalPriceElement.getAttribute('data-raw-price') || "0";
-                    const phoneInput = document.getElementById('customer-phone');
-                    const customerPhone = phoneInput ? phoneInput.value.trim() : "KHANH";
-                    
-                    const paymentDescription = `SORANCHI ${customerPhone}`.toUpperCase().replace(/\s+/g, '');
-                    
-                    const BANK_ID = "VCB"; 
-                    const ACCOUNT_NO = "1234567890"; 
-                    const ACCOUNT_NAME = "VU NGOC HAN"; 
-                    
-                    // Ghép link API VietQR động (đã bốc chuẩn số tiền cuối cùng sau giảm giá)
-                    const qrApiUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.jpg?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(paymentDescription)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-                    
-                    qrImage.src = qrApiUrl;
-                    qrAmountText.textContent = parseInt(amount).toLocaleString('vi-VN') + "đ";
-                    qrInfoText.textContent = paymentDescription;
-                    
-                    vietqrModal.show();
+            let currentOrderId = null;
+            let pollInterval = null;
+
+            function showError(msg) {
+                if (alertBox && errorText) {
+                    errorText.innerText = msg;
+                    alertBox.classList.remove('d-none');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    alert(msg);
                 }
+            }
+
+            if (!btnSubmit) return;
+
+            btnSubmit.addEventListener('click', function() {
+                const nameInput = document.getElementById('customer-name');
+                if (!nameInput || !nameInput.value.trim()) {
+                    showError('Vui lòng nhập họ và tên người nhận!');
+                    if (nameInput) nameInput.focus();
+                    return;
+                }
+
+                const phoneInput = document.getElementById('customer-phone');
+                const rawPhone = phoneInput ? phoneInput.value.trim() : '';
+                const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+
+                if (cleanPhone.length < 9 || cleanPhone.length > 11) {
+                    showError('Vui lòng nhập số điện thoại hợp lệ (từ 9 đến 11 chữ số)!');
+                    if (phoneInput) phoneInput.focus();
+                    return;
+                }
+
+                const addressInput = document.getElementById('customer-address');
+                if (!addressInput || !addressInput.value.trim()) {
+                    showError('Vui lòng nhập địa chỉ giao hàng chi tiết!');
+                    if (addressInput) addressInput.focus();
+                    return;
+                }
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...';
+
+                const formData = new FormData();
+                formData.append('fullName', nameInput.value.trim());
+                formData.append('phone', cleanPhone);
+                formData.append('address', addressInput.value.trim());
+
+                const noteInput = document.getElementById('customer-note');
+                formData.append('note', noteInput ? noteInput.value.trim() : '');
+
+                const isBank = document.getElementById('pay-bank').checked;
+                formData.append('paymentMethod', isBank ? 'BANK' : 'COD');
+
+                fetch('/api/checkout/create-order', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
+                        showError(data.message || 'Không thể tạo đơn hàng!');
+                        return;
+                    }
+
+                    // Nếu COD: chuyển thẳng tới trang thành công
+                    if (!isBank) {
+                        window.location.href = '/order-success/' + data.orderId;
+                    } else {
+                        // Nếu BANK: mở modal QR
+                        currentOrderId = data.orderId;
+                        const amount = data.finalPrice;
+                        const note = `SRC${currentOrderId}`;
+
+                        const BANK_ID = "VCB";
+                        const ACCOUNT_NO = "1234567890";
+                        const ACCOUNT_NAME = "VU NGOC HAN";
+
+                        const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.jpg?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+
+                        document.getElementById('vietqr-image-placeholder').src = qrUrl;
+                        document.getElementById('qr-modal-amount').textContent = parseInt(amount).toLocaleString('vi-VN') + "đ";
+                        document.getElementById('qr-modal-info').textContent = note;
+
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                            bsModal.show();
+                        } else {
+                            modalEl.classList.add('show');
+                            modalEl.style.display = 'block';
+                        }
+
+                        // Polling: Kiểm tra trạng thái đơn nếu có webhook/backend duyệt
+                        pollInterval = setInterval(() => {
+                            fetch(`/api/checkout/check-status/${currentOrderId}`)
+                                .then(res => res.json())
+                                .then(statusData => {
+                                    if (statusData.paid) {
+                                        clearInterval(pollInterval);
+                                        window.location.href = '/order-success/' + currentOrderId;
+                                    }
+                                })
+                                .catch(() => {});
+                        }, 2500);
+                    }
+                })
+                .catch(err => {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
+                    showError('Lỗi kết nối máy chủ! Vui lòng thử lại sau.');
+                });
             });
 
-            btnConfirmPayment.addEventListener('click', function() {
-                vietqrModal.hide();
-                formCheckout.submit(); // Submit form lên hàm /checkout/submit thật sự
-            });
-        })();
+            // Khi người dùng bấm nút xác nhận đã chuyển tiền
+            if (btnConfirmPayment) {
+                btnConfirmPayment.addEventListener('click', function() {
+                    if (!currentOrderId) return;
+                    btnConfirmPayment.disabled = true;
+                    btnConfirmPayment.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực giao dịch...';
+
+                    fetch(`/api/checkout/simulate-ipn/${currentOrderId}`, { method: 'POST' })
+                        .then(res => res.text())
+                        .then(result => {
+                            if (result === 'SUCCESS' || result === 'ALREADY_PAID') {
+                                if (pollInterval) clearInterval(pollInterval);
+                                window.location.href = '/order-success/' + currentOrderId;
+                            } else {
+                                alert('Không thể xác nhận thanh toán. Vui lòng thử lại!');
+                                btnConfirmPayment.disabled = false;
+                                btnConfirmPayment.innerHTML = '<i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản';
+                            }
+                        })
+                        .catch(() => {
+                            alert('Lỗi kết nối máy chủ khi xác thực!');
+                            btnConfirmPayment.disabled = false;
+                            btnConfirmPayment.innerHTML = '<i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản';
+                        });
+                });
+            }
+
+            // Đóng Modal QR
+            const btnClose = document.getElementById('btn-close-qr-modal');
+            if (btnClose) {
+                btnClose.addEventListener('click', function() {
+                    if (pollInterval) clearInterval(pollInterval);
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
+                    modalEl.classList.remove('show');
+                    modalEl.style.display = 'none';
+                });
+            }
+        });
     </script>
 </div>
 

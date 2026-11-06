@@ -6,6 +6,20 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
+    <!-- Cảnh báo lỗi từ Controller (Flash Attribute) -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center mb-4" role="alert">
+        <i class="fas fa-exclamation-circle me-2 text-danger fs-6"></i>
+        <span class="fw-medium text-danger" th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.9rem;"></button>
+    </div>
+
+    <!-- Cảnh báo lỗi trực tiếp phía giao diện (JavaScript) -->
+    <div id="js-stock-alert" class="alert alert-warning alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center mb-4 d-none" role="alert">
+        <i class="fas fa-exclamation-triangle me-2 text-warning fs-6"></i>
+        <span id="js-stock-alert-msg" class="fw-medium text-dark"></span>
+        <button type="button" class="btn-close" onclick="document.getElementById('js-stock-alert').classList.add('d-none')" aria-label="Close" style="padding: 0.9rem;"></button>
+    </div>
+
     <div class="mb-4">
         <a href="/products" class="text-decoration-none text-dark fw-bold">
             <i class="fas fa-arrow-left"></i> Quay lại danh sách sản phẩm
@@ -18,7 +32,8 @@
                 <img th:src="@{'/image/' + ${product.imageUrl}}" 
                      th:alt="${product.name}" 
                      class="img-fluid w-100 rounded" 
-                     style="object-fit: cover; min-height: 400px; height: 450px;">
+                     style="object-fit: cover; min-height: 400px; height: 450px;"
+                     onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
             </div>
         </div>
 
@@ -45,12 +60,19 @@
                     <span class="text-muted small">(<span id="review-count-badge" th:text="${totalReviews}">0</span> đánh giá thực tế)</span>
                 </div>
 
-                <div class="d-flex align-items-center mb-4">
+                <!-- Giá & Tồn kho thực tế -->
+                <div class="d-flex align-items-center gap-3 mb-4">
                     <h2 class="text-danger fw-bold m-0" 
                         th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
                         0 VNĐ
                     </h2>
-                    <span class="ms-3 badge bg-success px-2 py-1.5">Còn hàng</span>
+                    
+                    <span th:if="${product.quantity > 0}" class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                        <i class="fas fa-box-open me-1"></i> Còn <span th:text="${product.quantity}">0</span> ly trong kho
+                    </span>
+                    <span th:if="${product.quantity <= 0}" class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
+                        <i class="fas fa-ban me-1"></i> Tạm hết hàng
+                    </span>
                 </div>
 
                 <div class="product-description mb-4">
@@ -64,7 +86,7 @@
 
                 <hr class="my-4 opacity-25">
 
-                <form th:action="@{/cart/add}" method="post" class="action-area">
+                <form th:action="@{/cart/add}" method="post" class="action-area" id="form-add-to-cart">
                     <input type="hidden" name="id" th:value="${product.id}">
                     <input type="hidden" name="options" value="">
 
@@ -74,14 +96,18 @@
                         </div>
                         <div class="col-auto">
                             <div class="input-group" style="width: 130px;">
-                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(-1)">-</button>
-                                <input type="number" name="quantity" id="quantity" class="form-control text-center fw-bold bg-transparent" value="1" min="1" readonly>
-                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(1)">+</button>
+                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(-1)" th:disabled="${product.quantity <= 0}">-</button>
+                                <input type="number" name="quantity" id="quantity" class="form-control text-center fw-bold bg-transparent" 
+                                       value="1" min="1" th:max="${product.quantity}" readonly>
+                                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changeQty(1)" th:disabled="${product.quantity <= 0}">+</button>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold" style="background-color: #1a1a1a; border-radius: 6px;">
-                                <i class="fas fa-cart-plus me-2"></i> THÊM VÀO GIỎ HÀNG
+                            <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold" 
+                                    style="background-color: #1a1a1a; border-radius: 6px;"
+                                    th:disabled="${product.quantity <= 0}">
+                                <i class="fas fa-cart-plus me-2"></i> 
+                                <span th:text="${product.quantity > 0 ? 'THÊM VÀO GIỎ HÀNG' : 'TẠM HẾT HÀNG'}">THÊM VÀO GIỎ HÀNG</span>
                             </button>
                         </div>
                     </div>
@@ -104,13 +130,13 @@
 
     <hr class="my-5 opacity-25">
 
+    <!-- Khu vực đánh giá -->
     <div class="row g-4" th:if="${product != null}">
         <div class="col-lg-7">
             <h4 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
                 💬 KHÁCH HÀNG NÓI GÌ VỀ MÓN NÀY?
             </h4>
             <div id="review-list-container" class="d-flex flex-column gap-3">
-                
                 <div th:if="${#lists.isEmpty(reviews)}" class="text-muted small py-4 text-center border bg-light rounded-3">
                     Hiện chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên chia sẻ cảm nhận!
                 </div>
@@ -128,7 +154,6 @@
                     </div>
                     <p class="text-secondary mb-0 small mt-1" th:text="${rev.comment}">Nội dung bình luận thật từ DB</p>
                 </div>
-
             </div>
         </div>
 
@@ -137,11 +162,8 @@
                 <h5 class="fw-bold text-dark mb-1">✨ CHIA SẺ CẢM NHẬN</h5>
                 <p class="text-muted small mb-3">Ý kiến của bạn giúp cải thiện chất lượng Soranchi mỗi ngày</p>
                 
-                <span id="session-user-fullname" th:text="${session.loggedInUser != null ? session.loggedInUser.fullName : 'Khách ẩn danh'}" style="display: none;"></span>
-
                 <form id="form-submit-review-soranchi" th:action="@{/product/review}" method="post">
                     <input type="hidden" name="productId" th:value="${product.id}">
-                    
                     <input type="hidden" name="rating" id="input-hidden-rating-value" value="5">
 
                     <div class="mb-3">
@@ -168,18 +190,47 @@
         </div>
     </div>
 
-    <script>
-        // 1. Hàm thay đổi số lượng đặt hàng gốc của bạn
-        function changeQty(amt) {
-            var qtyInput = document.getElementById('quantity');
-            var currentVal = parseInt(qtyInput.value);
-            if (!isNaN(currentVal)) {
-                var newVal = currentVal + amt;
-                if (newVal >= 1) qtyInput.value = newVal;
+    <!-- Script điều khiển số lượng và hiển thị lỗi tức thì -->
+    <script th:inline="javascript">
+        const maxStock = /*[[${product != null ? product.quantity : 0}]]*/ 0;
+
+        function showStockAlert(msg) {
+            const alertBox = document.getElementById('js-stock-alert');
+            const alertMsg = document.getElementById('js-stock-alert-msg');
+            if (alertBox && alertMsg) {
+                alertMsg.innerText = msg;
+                alertBox.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                alert(msg);
             }
         }
 
-        // 2. Logic điều khiển Đánh giá & Chọn sao động
+        function changeQty(amt) {
+            const qtyInput = document.getElementById('quantity');
+            if (!qtyInput) return;
+
+            let currentVal = parseInt(qtyInput.value) || 1;
+
+            if (maxStock <= 0) {
+                showStockAlert("Sản phẩm này hiện tại đã hết hàng!");
+                return;
+            }
+
+            if (amt > 0 && currentVal >= maxStock) {
+                showStockAlert(`Kho chỉ còn lại ${maxStock} ly, bạn không thể chọn thêm!`);
+                return;
+            }
+
+            let newVal = currentVal + amt;
+            if (newVal >= 1 && newVal <= maxStock) {
+                qtyInput.value = newVal;
+                const alertBox = document.getElementById('js-stock-alert');
+                if (alertBox) alertBox.classList.add('d-none');
+            }
+        }
+
+        // Logic điều khiển Đánh giá & Chọn sao
         (function() {
             let selectedRatingStars = 5;
             const starSelectorBox = document.getElementById('star-rating-selector');
@@ -198,7 +249,7 @@
                 star.addEventListener('click', function() {
                     selectedRatingStars = parseInt(this.getAttribute('data-index'));
                     if (inputHiddenRating) {
-                        inputHiddenRating.value = selectedRatingStars; // Đóng số sao đã chốt vào thẻ ẩn để gửi lên Java
+                        inputHiddenRating.value = selectedRatingStars;
                     }
                     highlightStars(selectedRatingStars);
                 });
@@ -213,7 +264,26 @@
                     }
                 });
             }
-            // ĐÃ GỠ BỎ HOÀN TOÀN: Logic formReview.addEventListener('submit') chặn dữ liệu cũ! Form giờ sẽ submit thật lên Java.
+
+            // Kiểm tra form trước khi gửi
+            const formAdd = document.getElementById('form-add-to-cart');
+            if (formAdd) {
+                formAdd.addEventListener('submit', function(e) {
+                    const qtyInput = document.getElementById('quantity');
+                    const requestedQty = parseInt(qtyInput.value) || 0;
+
+                    if (maxStock <= 0) {
+                        e.preventDefault();
+                        showStockAlert("Sản phẩm này hiện tại đã hết hàng trong kho!");
+                        return;
+                    }
+
+                    if (requestedQty > maxStock) {
+                        e.preventDefault();
+                        showStockAlert(`Trong kho chỉ còn ${maxStock} ly! Vui lòng chọn số lượng phù hợp.`);
+                    }
+                });
+            }
         })();
     </script>
 

@@ -2,6 +2,7 @@ package com.example.demo.Controller;
 
 import com.example.demo.model.RevenueDTO;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.TreeMap;
 import com.example.demo.model.CartItem;
@@ -11,6 +12,7 @@ import com.example.demo.model.User;
 import com.example.demo.model.Promotion;
 import com.example.demo.model.Order;
 import com.example.demo.model.OrderDetail;
+import com.example.demo.model.PaymentTransaction;
 import com.example.demo.model.Policy;
 import com.example.demo.model.Support;
 import com.example.demo.model.Category;
@@ -33,6 +35,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -71,6 +76,9 @@ public class LayoutController {
 
     @Autowired
     private SupportRepository supportRepository;
+
+    @Autowired
+    private com.example.demo.repository.PaymentTransactionRepository paymentTransactionRepository;
 
     // ==========================================
     // CÁC CHỨC NĂNG CHUNG & KHÁCH HÀNG
@@ -161,22 +169,6 @@ public class LayoutController {
         return "redirect:" + (referer != null ? referer : "/product/" + productId);
     }
 
-    @GetMapping("/order")
-    public String orderPage(Model model, HttpSession session) {
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user != null) {
-            model.addAttribute("cartItems", cartService.getItems(user.getId()));
-            model.addAttribute("totalPrice", cartService.getTotalPrice(user.getId()));
-        } else {
-            model.addAttribute("cartItems", java.util.Collections.emptyList());
-            model.addAttribute("totalPrice", 0.0);
-        }
-        model.addAttribute("pageTitle", "Giỏ hàng");
-        model.addAttribute("contentTemplate", "trasua/pages/order");
-        model.addAttribute("contentFragment", "content");
-        return "layout";
-    }
-
     @GetMapping("/about")
     public String aboutPage(Model model) {
         model.addAttribute("pageTitle", "Giới thiệu");
@@ -193,38 +185,77 @@ public class LayoutController {
         return "layout";
     }
 
-    @PostMapping("/cart/add")
+@PostMapping("/cart/add")
     public String addToCart(@RequestParam("id") int id, 
                             @RequestParam("quantity") int quantity, 
                             @RequestParam(value = "options", required = false, defaultValue = "") String options, 
                             HttpSession session, 
-                            HttpServletRequest request) {
+                            HttpServletRequest request,
+                            RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) {
             return "redirect:/login"; 
         }
 
         Product product = productRepository.findById(id).orElse(null);
-        if (product != null) {
-            double finalSinglePrice = product.getPrice();
-            if (options != null && !options.isEmpty()) {
-                if (options.contains("Trân châu hoàng kim")) { finalSinglePrice += 6000; }
-                if (options.contains("Thạch sương sáo")) { finalSinglePrice += 5000; }
-                if (options.contains("Kem cheese")) { finalSinglePrice += 10000; }
-            }
-
-            String customProductName = product.getName();
-            if (options != null && !options.isEmpty()) {
-                customProductName += " (" + options + ")";
-            }
-
-            cartService.addItem(new CartItem(
-                user.getId(), product.getId(), customProductName, product.getImageUrl(), finalSinglePrice, quantity
-            ));
+        if (product == null) {
+            return "redirect:/products";
         }
+
+        // 1. Kiểm tra nếu sản phẩm đã ngừng kinh doanh
+        if ("NGỪNG BÁN".equalsIgnoreCase(product.getStatus())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Sản phẩm này hiện đang ngừng bán!");
+            return "redirect:/product/" + id;
+        }
+
+        // 2. Kiểm tra nếu kho đã hết hàng hoàn toàn
+        if (product.getQuantity() <= 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Sản phẩm '" + product.getName() + "' hiện đã tạm hết hàng trong kho!");
+            return "redirect:/product/" + id;
+        }
+
+        // 3. Tính tổng số lượng sản phẩm này đã có trong giỏ của user (bao gồm cả các loại topping khác nhau)
+        List<CartItem> userCartItems = cartItemRepository.findByUserId(user.getId());
+        int currentQtyInCart = userCartItems.stream()
+                .filter(item -> item.getProductId() == id)
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+
+        int totalRequested = currentQtyInCart + quantity;
+
+        // 4. Chặn nếu vượt quá số lượng tồn kho và bắn Flash message hiển thị lên màn hình
+        if (totalRequested > product.getQuantity()) {
+            if (currentQtyInCart > 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Không thể thêm! Kho chỉ còn " + product.getQuantity() + " ly (Trong giỏ hàng bạn đã có sẵn " + currentQtyInCart + " ly).");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Không thể thêm! Số lượng yêu cầu (" + quantity + " ly) vượt quá số lượng tồn kho hiện có (" + product.getQuantity() + " ly).");
+            }
+            return "redirect:/product/" + id;
+        }
+
+        // 5. Tính giá theo Topping
+        double finalSinglePrice = product.getPrice();
+        if (options != null && !options.isEmpty()) {
+            if (options.contains("Trân châu hoàng kim")) { finalSinglePrice += 6000; }
+            if (options.contains("Thạch sương sáo")) { finalSinglePrice += 5000; }
+            if (options.contains("Kem cheese")) { finalSinglePrice += 10000; }
+        }
+
+        String customProductName = product.getName();
+        if (options != null && !options.isEmpty()) {
+            customProductName += " (" + options + ")";
+        }
+
+        // 6. Thêm vào giỏ hàng
+        cartService.addItem(new CartItem(
+            user.getId(), product.getId(), customProductName, product.getImageUrl(), finalSinglePrice, quantity
+        ));
         
-        String referer = request.getHeader("Referer");
-        return "redirect:" + (referer != null ? referer : "/");
+        // 7. Thông báo thành công và giữ người dùng ở lại trang chi tiết món
+        redirectAttributes.addFlashAttribute("successMessage", "Đã thêm " + quantity + " ly '" + product.getName() + "' vào giỏ hàng!");
+        return "redirect:/product/" + id;
     }
 
     // ==========================================
@@ -318,36 +349,59 @@ public class LayoutController {
     }
 
     // ==========================================
-    // KHU VỰC QUẢN TRỊ VIÊN (ADMIN CRUDS)
+    // KHU VỰC QUẢN TRỊ VIÊN: QUẢN LÝ SẢN PHẨM
     // ==========================================
 
     @GetMapping("/admin/products")
     public String adminProductList(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
 
-        List<Product> productList = productRepository.findAll();
-        model.addAttribute("products", productList);
+        try {
+            List<Product> productList = productRepository.findAll();
+            model.addAttribute("products", productList);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể kết nối cơ sở dữ liệu để tải danh sách sản phẩm!");
+        }
+
         model.addAttribute("pageTitle", "Hệ thống Quản lý Sản phẩm - Admin");
         model.addAttribute("contentTemplate", "trasua/pages/admin_products"); 
         model.addAttribute("contentFragment", "content");
         return "layout";
     }
 
-    @GetMapping("/admin/product/delete/{id}")
-    public String deleteProduct(@PathVariable("id") int id, HttpSession session) {
+    @GetMapping("/admin/product/add")
+    public String showAddForm(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
-        productRepository.deleteById(id); 
-        return "redirect:/admin/products"; 
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
+
+        Product product = new Product();
+        product.setStatus("ĐANG BÁN");
+        product.setQuantity(50);
+        model.addAttribute("product", product);
+        model.addAttribute("categories", categoryRepository.findAll()); 
+        model.addAttribute("pageTitle", "Thêm sản phẩm mới");
+        model.addAttribute("contentTemplate", "trasua/pages/edit_product");
+        model.addAttribute("contentFragment", "content");
+        return "layout";
     }
 
     @GetMapping("/admin/product/edit/{id}")
     public String editProductForm(@PathVariable("id") int id, Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
 
         Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return "redirect:/admin/products";
+        }
+
         model.addAttribute("product", product); 
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("pageTitle", "Chỉnh sửa sản phẩm");
@@ -356,28 +410,81 @@ public class LayoutController {
         return "layout";
     }
 
-    @GetMapping("/admin/product/add")
-    public String showAddForm(Model model, HttpSession session) {
-        User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
-
-        model.addAttribute("product", new Product());
-        model.addAttribute("categories", categoryRepository.findAll()); 
-        model.addAttribute("pageTitle", "Thêm sản phẩm mới");
-        model.addAttribute("contentTemplate", "trasua/pages/edit_product");
-        model.addAttribute("contentFragment", "content");
-        return "layout";
-    }
-
     @PostMapping("/admin/product/save")
-    public String saveProduct(@ModelAttribute("product") Product product, HttpSession session) {
+    public String saveProduct(@ModelAttribute("product") Product product,
+                              HttpSession session,
+                              RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) return "redirect:/login";
-        productRepository.save(product); 
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
+
+        try {
+            if (product.getProductCode() == null || product.getProductCode().trim().isEmpty()) {
+                product.setProductCode("SP" + System.currentTimeMillis() % 100000);
+            } else {
+                product.setProductCode(product.getProductCode().trim().toUpperCase());
+            }
+
+            Product existingProduct = productRepository.findByProductCode(product.getProductCode());
+            if (product.getId() == 0) { 
+                if (existingProduct != null) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Từ chối tạo mới: Mã sản phẩm '" + product.getProductCode() + "' đã tồn tại!");
+                    return "redirect:/admin/product/add";
+                }
+                if (product.getStatus() == null || product.getStatus().isEmpty()) {
+                    product.setStatus("ĐANG BÁN");
+                }
+                productRepository.save(product);
+                redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm '" + product.getName() + "' thành công!");
+            } else { 
+                if (existingProduct != null && existingProduct.getId() != product.getId()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Mã sản phẩm '" + product.getProductCode() + "' đã tồn tại ở sản phẩm khác!");
+                    return "redirect:/admin/product/edit/" + product.getId();
+                }
+                productRepository.save(product);
+                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm '" + product.getName() + "' thành công!");
+            }
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể lưu thông tin sản phẩm.");
+        }
+
         return "redirect:/admin/products"; 
     }
 
-// ==========================================
+    @GetMapping("/admin/product/delete/{id}")
+    public String deleteProduct(@PathVariable("id") int id, 
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/login";
+        }
+
+        try {
+            Product product = productRepository.findById(id).orElse(null);
+            if (product != null) {
+                boolean hasOrder = orderDetailRepository.findAll().stream().anyMatch(d -> d.getProductId() == id);
+                boolean hasCart = cartItemRepository.findAll().stream().anyMatch(c -> c.getProductId() == id);
+
+                if (hasOrder || hasCart) {
+                    product.setStatus("NGỪNG BÁN");
+                    productRepository.save(product);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Sản phẩm '" + product.getName() + "' đã phát sinh đơn hàng hoặc trong giỏ hàng nên hệ thống đã tự động chuyển sang trạng thái 'NGỪNG BÁN'.");
+                } else {
+                    productRepository.deleteById(id);
+                    redirectAttributes.addFlashAttribute("successMessage", "Xóa sản phẩm thành công!");
+                }
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể thực hiện xóa.");
+        }
+
+        return "redirect:/admin/products"; 
+    }
+
+    // ==========================================
     // KHU VỰC QUẢN TRỊ VIÊN: QUẢN LÝ KHUYẾN MẠI
     // ==========================================
 
@@ -400,7 +507,6 @@ public class LayoutController {
         return "layout";
     }
 
-    // Bước 3.1 & 3.2: Xử lý Thêm mới hoặc Cập nhật khuyến mãi
     @PostMapping("/admin/promotion/save")
     public String savePromotion(@RequestParam(value = "id", required = false) Integer id,
                                 @RequestParam("code") String code,
@@ -410,7 +516,7 @@ public class LayoutController {
                                 @RequestParam("startDate") String startDateStr,
                                 @RequestParam("endDate") String endDateStr,
                                 HttpSession session,
-                                org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+                                RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
             return "redirect:/login";
@@ -421,7 +527,6 @@ public class LayoutController {
             LocalDate start = LocalDate.parse(startDateStr);
             LocalDate end = LocalDate.parse(endDateStr);
 
-            // Luồng rẽ nhánh 1: Kiểm tra hợp lệ dữ liệu ngày bắt đầu < ngày kết thúc
             if (start.isAfter(end)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Lỗi dữ liệu: Thời gian bắt đầu phải nhỏ hơn hoặc bằng thời gian kết thúc!");
                 return "redirect:/admin/promotions";
@@ -432,7 +537,6 @@ public class LayoutController {
                 return "redirect:/admin/promotions";
             }
 
-            // Luồng rẽ nhánh 2: Thêm mới mà mã code đã tồn tại
             if (id == null) {
                 Promotion existingPromo = promotionRepository.findByCode(cleanCode);
                 if (existingPromo != null) {
@@ -440,7 +544,6 @@ public class LayoutController {
                     return "redirect:/admin/promotions";
                 }
             } else {
-                // Trường hợp sửa: kiểm tra nếu đổi mã sang một mã khác đã có sẵn
                 Promotion existingPromo = promotionRepository.findByCode(cleanCode);
                 if (existingPromo != null && existingPromo.getId() != id) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Mã khuyến mãi '" + cleanCode + "' đã thuộc về một chương trình khác!");
@@ -464,17 +567,15 @@ public class LayoutController {
             redirectAttributes.addFlashAttribute("successMessage", (id == null ? "Thêm mới" : "Cập nhật") + " chương trình khuyến mại '" + cleanCode + "' thành công!");
 
         } catch (Exception e) {
-            // Luồng rẽ nhánh 4: Lỗi cơ sở dữ liệu
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể lưu thông tin khuyến mại.");
         }
 
         return "redirect:/admin/promotions";
     }
 
-    // Bật / Tắt trạng thái hoạt động của khuyến mãi
     @GetMapping("/admin/promotion/toggle/{id}")
     public String togglePromotion(@PathVariable("id") int id, HttpSession session,
-                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+                                  RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
             return "redirect:/login";
@@ -494,10 +595,9 @@ public class LayoutController {
         return "redirect:/admin/promotions";
     }
 
-    // Bước 3.3: Xóa khuyến mãi có kiểm tra điều kiện
     @GetMapping("/admin/promotion/delete/{id}")
     public String deletePromotion(@PathVariable("id") int id, HttpSession session,
-                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+                                  RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
             return "redirect:/login";
@@ -506,7 +606,6 @@ public class LayoutController {
         try {
             Promotion promo = promotionRepository.findById(id).orElse(null);
             if (promo != null) {
-                // Luồng rẽ nhánh 3: Nếu khuyến mãi đang kích hoạt và chưa hết hạn thì từ chối xóa
                 if (promo.isActive() && !promo.isExpired()) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thao tác: Chương trình khuyến mại '" + promo.getCode() + "' đang được kích hoạt sử dụng! Vui lòng tạm dừng (Pause) trước khi xóa.");
                     return "redirect:/admin/promotions";
@@ -515,12 +614,15 @@ public class LayoutController {
                 redirectAttributes.addFlashAttribute("successMessage", "Xóa chương trình khuyến mại thành công!");
             }
         } catch (Exception e) {
-            // Luồng rẽ nhánh 4: Lỗi cơ sở dữ liệu
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu hoặc chương trình đang có dữ liệu liên kết! Không thể xóa.");
         }
 
         return "redirect:/admin/promotions";
     }
+
+    // ==========================================
+    // KHU VỰC QUẢN TRỊ VIÊN: QUẢN LÝ ĐƠN HÀNG & BÁO CÁO
+    // ==========================================
 
     @GetMapping("/admin/orders")
     public String adminOrderDashboard(@RequestParam(value = "status", required = false) String status, 
@@ -601,7 +703,6 @@ public class LayoutController {
         return "redirect:/admin/order/detail/" + id;
     }
 
-    //QUẢN LÝ ĐIỀU KHOẢN & CHÍNH SÁCH (CRUD)
     @GetMapping("/admin/policies")
     public String adminPolicies(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -636,7 +737,6 @@ public class LayoutController {
         return "redirect:/admin/policies";
     }
 
-    //TRUNG TÂM TIẾN NHẬN HỖ TRỢ & KHIẾU NẠI KHÁCH HÀNG
     @GetMapping("/admin/supports")
     public String adminSupports(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -662,7 +762,6 @@ public class LayoutController {
         return "redirect:/admin/supports";
     }
     
-    //THỐNG KÊ DOANH THU
     @GetMapping("/admin/revenue")
     public String adminRevenueDashboard(@RequestParam(value = "startDate", required = false) String startDateStr,
                                         @RequestParam(value = "endDate", required = false) String endDateStr,
@@ -705,7 +804,7 @@ public class LayoutController {
                 .mapToLong(OrderDetail::getQuantity).sum())
             .sum();
 
-        java.util.Map<String, Double> revenueMap = new java.util.TreeMap<>();
+        Map<String, Double> revenueMap = new TreeMap<>();
         LocalDate tempDate = startDate;
         while (!tempDate.isAfter(endDate)) {
             revenueMap.put(tempDate.toString(), 0.0);
@@ -716,7 +815,7 @@ public class LayoutController {
             revenueMap.put(dateKey, revenueMap.getOrDefault(dateKey, 0.0) + o.getTotalPrice());
         }
 
-        com.example.demo.model.RevenueDTO dto = new com.example.demo.model.RevenueDTO();
+        RevenueDTO dto = new RevenueDTO();
         dto.setTotalRevenue(totalRevenue);
         dto.setTotalOrders(totalOrders);
         dto.setTotalProductsSold(totalProductsSold);
@@ -734,7 +833,6 @@ public class LayoutController {
         return "layout";
     }
     
-    //Giao diện xem danh sách toàn bộ danh mục đang có (FULL CRUD TRÊN MODAL POPUP)
     @GetMapping("/admin/categories")
     public String adminCategoryList(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -747,7 +845,6 @@ public class LayoutController {
         return "layout";
     }
     
-    //Xử lý lưu dữ liệu danh mục (Dùng chung cho cả THÊM MỚI, CẬP NHẬT SỬA)
     @PostMapping("/admin/category/save")
     public String saveCategory(@RequestParam(value = "id", required = false) Integer id,
                                @RequestParam("name") String name,
@@ -766,7 +863,6 @@ public class LayoutController {
         return "redirect:/admin/categories";
     }
     
-    //Xử lý xóa danh mục an toàn có try-catch chống sập dữ liệu
     @GetMapping("/admin/category/delete/{id}")
     public String deleteCategory(@PathVariable("id") int id, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -781,8 +877,9 @@ public class LayoutController {
     }
     
     // ==========================================
-    // PHÂN HỆ KHÁCH HÀNG
+    // PHÂN HỆ KHÁCH HÀNG: CHECKOUT & THANH TOÁN
     // ==========================================
+
     @GetMapping("/checkout")
     public String showCheckoutPage(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -807,7 +904,7 @@ public class LayoutController {
 
     @PostMapping("/checkout/apply-coupon")
     public String applyCouponAction(@RequestParam("couponCode") String couponCode, 
-                               HttpSession session, HttpServletRequest request) {
+                                    HttpSession session, HttpServletRequest request) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) return "redirect:/login";
 
@@ -837,42 +934,154 @@ public class LayoutController {
         return "redirect:" + (referer != null ? referer : "/checkout");
     }
 
-    @PostMapping("/checkout/submit")
-    public String processOrderAction(@RequestParam("fullName") String fullName,
-                               @RequestParam("phone") String phone,
-                               @RequestParam("address") String address,
-                               @RequestParam(value = "paymentMethod", required = false, defaultValue = "COD") String paymentMethod, 
-                               HttpSession session, Model model) {
+// 1. Khởi tạo đơn hàng & tạo bản ghi giao dịch
+    @PostMapping("/api/checkout/create-order")
+    @ResponseBody
+    public Map<String, Object> createOrderAjax(@RequestParam("fullName") String fullName,
+                                              @RequestParam("phone") String phone,
+                                              @RequestParam("address") String address,
+                                              @RequestParam(value = "paymentMethod", defaultValue = "COD") String paymentMethod,
+                                              HttpSession session) {
+        Map<String, Object> response = new java.util.HashMap<>();
         User user = (User) session.getAttribute("loggedInUser");
-        if (user == null) return "redirect:/login";
-        if (cartService.getItems(user.getId()).isEmpty()) return "redirect:/products";
-
-        Order order = new Order();
-        order.setUserId(user.getId());
-        order.setFullName(fullName);
-        order.setPhone(phone);
-        order.setAddress(address);
-        order.setPaymentMethod(paymentMethod); 
-        order.setTotalPrice(session.getAttribute("finalPrice") != null ? (double) session.getAttribute("finalPrice") : cartService.getTotalPrice(user.getId()));
-        orderRepository.save(order);
-
-        for (CartItem item : cartService.getItems(user.getId())) {
-            OrderDetail detail = new OrderDetail();
-            detail.setOrderId(order.getId());
-            detail.setProductId(item.getProductId());
-            detail.setProductName(item.getName());
-            detail.setImageUrl(item.getImageUrl());
-            detail.setPrice(item.getPrice());
-            detail.setQuantity(item.getQuantity());
-            orderDetailRepository.save(detail);
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "Vui lòng đăng nhập để tiến hành thanh toán!");
+            return response;
         }
 
-        cartService.clear(user.getId()); 
+        List<CartItem> cartItems = cartService.getItems(user.getId());
+        if (cartItems.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Giỏ hàng của bạn đang trống!");
+            return response;
+        }
+
+        String cleanPhone = phone != null ? phone.trim().replaceAll("[^0-9]", "") : "";
+        if (cleanPhone.length() < 9 || cleanPhone.length() > 11) {
+            response.put("success", false);
+            response.put("message", "Số điện thoại không hợp lệ! Vui lòng nhập từ 9 đến 11 chữ số.");
+            return response;
+        }
+
+        try {
+            double finalPrice = session.getAttribute("finalPrice") != null ? 
+                                (double) session.getAttribute("finalPrice") : cartService.getTotalPrice(user.getId());
+
+            Order order = new Order();
+            order.setUserId(user.getId());
+            order.setFullName(fullName.trim());
+            order.setPhone(cleanPhone);
+            order.setAddress(address.trim());
+            order.setPaymentMethod(paymentMethod);
+            order.setTotalPrice(finalPrice);
+            order.setStatus("BANK".equalsIgnoreCase(paymentMethod) ? "CHỜ THANH TOÁN" : "CHỜ XÁC NHẬN");
+            orderRepository.save(order);
+
+            for (CartItem item : cartItems) {
+                OrderDetail detail = new OrderDetail();
+                detail.setOrderId(order.getId());
+                detail.setProductId(item.getProductId());
+                detail.setProductName(item.getName());
+                detail.setImageUrl(item.getImageUrl());
+                detail.setPrice(item.getPrice());
+                detail.setQuantity(item.getQuantity());
+                orderDetailRepository.save(detail);
+            }
+
+            PaymentTransaction transaction = new PaymentTransaction();
+            transaction.setOrderId(order.getId());
+            transaction.setAmount(finalPrice);
+            transaction.setPaymentMethodId("BANK".equalsIgnoreCase(paymentMethod) ? 2 : 1);
+            transaction.setStatus("BANK".equalsIgnoreCase(paymentMethod) ? "PENDING" : "SUCCESS");
+            transaction.setResponseCode("TRANS_" + System.currentTimeMillis());
+            paymentTransactionRepository.save(transaction);
+
+            // Nếu COD: Trừ tồn kho và xóa giỏ luôn
+            if ("COD".equalsIgnoreCase(paymentMethod)) {
+                for (CartItem item : cartItems) {
+                    Product product = productRepository.findById(item.getProductId()).orElse(null);
+                    if (product != null) {
+                        product.setQuantity(Math.max(0, product.getQuantity() - item.getQuantity()));
+                        productRepository.save(product);
+                    }
+                }
+                cartService.clear(user.getId());
+                session.removeAttribute("appliedPromoCode");
+                session.removeAttribute("discountPercent");
+                session.removeAttribute("discountAmount");
+                session.removeAttribute("finalPrice");
+            }
+
+            response.put("success", true);
+            response.put("orderId", order.getId());
+            response.put("finalPrice", finalPrice);
+            response.put("paymentMethod", paymentMethod);
+            return response;
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi cơ sở dữ liệu! Không thể tạo đơn hàng.");
+            return response;
+        }
+    }
+
+    // 2. Polling kiểm tra trạng thái đơn hàng
+    @GetMapping("/api/checkout/check-status/{orderId}")
+    @ResponseBody
+    public Map<String, Object> checkOrderStatus(@PathVariable("orderId") int orderId) {
+        Map<String, Object> response = new java.util.HashMap<>();
+        Order order = orderRepository.findById(orderId).orElse(null);
+        response.put("paid", order != null && "ĐÃ THANH TOÁN".equalsIgnoreCase(order.getStatus()));
+        return response;
+    }
+
+    // 3. Webhook / Xác nhận thanh toán trực tuyến thành công
+    @PostMapping("/api/checkout/simulate-ipn/{orderId}")
+    @ResponseBody
+    public String simulatePaymentSuccess(@PathVariable("orderId") int orderId) {
+        try {
+            Order order = orderRepository.findById(orderId).orElse(null);
+            if (order != null && !"ĐÃ THANH TOÁN".equalsIgnoreCase(order.getStatus())) {
+                order.setStatus("ĐÃ THANH TOÁN");
+                orderRepository.save(order);
+
+                PaymentTransaction transaction = paymentTransactionRepository.findByOrderId(orderId);
+                if (transaction != null) {
+                    transaction.setStatus("SUCCESS");
+                    transaction.setTransactionTime(LocalDateTime.now());
+                    paymentTransactionRepository.save(transaction);
+                }
+
+                // Trừ tồn kho
+                List<OrderDetail> details = orderDetailRepository.findByOrderId(orderId);
+                for (OrderDetail detail : details) {
+                    Product product = productRepository.findById(detail.getProductId()).orElse(null);
+                    if (product != null) {
+                        product.setQuantity(Math.max(0, product.getQuantity() - detail.getQuantity()));
+                        productRepository.save(product);
+                    }
+                }
+
+                // Làm rỗng giỏ hàng
+                cartService.clear(order.getUserId());
+                return "SUCCESS";
+            }
+        } catch (Exception e) {
+            return "ERROR";
+        }
+        return "ALREADY_PAID";
+    }
+
+    // 4. Trang thông báo đặt hàng thành công
+    @GetMapping("/order-success/{orderId}")
+    public String orderSuccessPage(@PathVariable("orderId") int orderId, Model model, HttpSession session) {
         session.removeAttribute("appliedPromoCode");
+        session.removeAttribute("discountPercent");
         session.removeAttribute("discountAmount");
         session.removeAttribute("finalPrice");
 
-        model.addAttribute("successOrderId", "SRC" + order.getId());
+        model.addAttribute("successOrderId", "SRC" + orderId);
         model.addAttribute("pageTitle", "Đặt hàng thành công");
         model.addAttribute("contentTemplate", "trasua/pages/order_success");
         model.addAttribute("contentFragment", "content");
@@ -936,36 +1145,114 @@ public class LayoutController {
         return "redirect:/profile?success=true";
     }
 
-@PostMapping("/cart/update")
-    public String updateCartQuantity(@RequestParam("id") int id, 
-                                     @RequestParam("action") String action,
-                                     HttpSession session) {
+    // ==========================================
+    // QUẢN LÝ GIỎ HÀNG
+    // ==========================================
+
+    @GetMapping("/order")
+    public String orderPage(Model model, HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) {
             return "redirect:/login";
         }
 
-        CartItem item = cartItemRepository.findById(id).orElse(null);
-        // Chỉ cho phép cập nhật nếu món hàng này đúng là của User đang đăng nhập
-        if (item != null && item.getUserId() == user.getId()) {
-            int newQty = action.equals("plus") ? item.getQuantity() + 1 : item.getQuantity() - 1;
-            cartService.updateQuantity(id, newQty);
+        try {
+            model.addAttribute("cartItems", cartService.getItems(user.getId()));
+            model.addAttribute("totalPrice", cartService.getTotalPrice(user.getId()));
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể kết nối cơ sở dữ liệu để tải giỏ hàng!");
+            model.addAttribute("cartItems", java.util.Collections.emptyList());
+            model.addAttribute("totalPrice", 0.0);
         }
+
+        model.addAttribute("pageTitle", "Giỏ hàng của bạn");
+        model.addAttribute("contentTemplate", "trasua/pages/order");
+        model.addAttribute("contentFragment", "content");
+        return "layout";
+    }
+
+    @PostMapping("/cart/update")
+    public String updateCartQuantity(@RequestParam("id") int id, 
+                                     @RequestParam("action") String action,
+                                     HttpSession session,
+                                     RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            CartItem item = cartItemRepository.findById(id).orElse(null);
+            if (item != null && item.getUserId() == user.getId()) {
+                Product product = productRepository.findById(item.getProductId()).orElse(null);
+                int stock = (product != null) ? product.getQuantity() : 999;
+
+                if ("plus".equalsIgnoreCase(action)) {
+                    int newQty = item.getQuantity() + 1;
+                    if (newQty > stock) {
+                        item.setQuantity(stock);
+                        cartItemRepository.save(item);
+                        redirectAttributes.addFlashAttribute("errorMessage", 
+                            "Số lượng sản phẩm vượt quá số lượng còn lại trong kho (Tối đa: " + stock + ")!");
+                    } else {
+                        item.setQuantity(newQty);
+                        cartItemRepository.save(item);
+                    }
+                } else if ("minus".equalsIgnoreCase(action)) {
+                    int newQty = item.getQuantity() - 1;
+                    if (newQty <= 0) {
+                        cartService.removeItem(id);
+                        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa sản phẩm khỏi giỏ hàng.");
+                    } else {
+                        item.setQuantity(newQty);
+                        cartItemRepository.save(item);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể cập nhật giỏ hàng.");
+        }
+
         return "redirect:/order"; 
     }
 
     @GetMapping("/cart/remove/{id}")
-    public String removeFromCart(@PathVariable("id") int id, HttpSession session) {
+    public String removeFromCart(@PathVariable("id") int id, 
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) {
             return "redirect:/login";
         }
 
-        CartItem item = cartItemRepository.findById(id).orElse(null);
-        // Chỉ cho phép xóa nếu đúng là giỏ của User đang đăng nhập
-        if (item != null && item.getUserId() == user.getId()) {
-            cartService.removeItem(id);
+        try {
+            CartItem item = cartItemRepository.findById(id).orElse(null);
+            if (item != null && item.getUserId() == user.getId()) {
+                cartService.removeItem(id);
+                redirectAttributes.addFlashAttribute("successMessage", "Đã xóa sản phẩm khỏi giỏ hàng thành công!");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu! Không thể xóa sản phẩm.");
         }
+
         return "redirect:/order"; 
+    }
+
+    @GetMapping("/cart/clear")
+    public String clearAllCart(HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            cartService.clear(user.getId());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa toàn bộ sản phẩm trong giỏ hàng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cơ sở dữ liệu! Không thể làm rỗng giỏ hàng.");
+        }
+
+        return "redirect:/order";
     }
 }
