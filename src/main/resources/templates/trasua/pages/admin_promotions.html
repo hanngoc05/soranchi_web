@@ -83,7 +83,7 @@
                             </div>
                         </td>
 
-                        <!-- Trạng thái -->
+                        <!-- Trạng thái (Chỉ theo hạn sử dụng) -->
                         <td class="text-center">
                             <span th:if="${p.isExpired()}" 
                                   class="badge rounded-pill px-2.5 py-1 fw-normal" 
@@ -91,20 +91,13 @@
                                 Hết hạn
                             </span>
                             <span th:unless="${p.isExpired()}" 
-                                  th:if="${p.isActive}" 
                                   class="badge rounded-pill px-2.5 py-1 fw-medium"
                                   style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
-                                • Đang chạy
-                            </span>
-                            <span th:unless="${p.isExpired()}" 
-                                  th:if="${!p.isActive}" 
-                                  class="badge rounded-pill px-2.5 py-1 fw-normal"
-                                  style="background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a;">
-                                Tạm dừng
+                                Đang chạy
                             </span>
                         </td>
 
-                        <!-- Nút thao tác tinh gọn -->
+                        <!-- Nút thao tác (Chỉ Sửa và Xóa khi hết hạn) -->
                         <td class="text-end pe-4">
                             <div class="d-inline-flex align-items-center gap-1">
                                 <!-- Nút Sửa -->
@@ -115,21 +108,23 @@
                                     <i class="far fa-edit"></i>
                                 </button>
 
-                                <!-- Nút Bật/Tắt -->
-                                <a th:href="@{/admin/promotion/toggle/{id}(id=${p.id})}" 
-                                   class="btn btn-sm btn-light border-0 rounded-2 px-2 py-1 action-btn"
-                                   th:classappend="${p.isActive} ? 'text-warning' : 'text-success'"
-                                   th:title="${p.isActive} ? 'Tạm dừng chạy' : 'Kích hoạt lại'">
-                                    <i th:class="${p.isActive} ? 'fas fa-pause' : 'fas fa-play'"></i>
-                                </a>
-
-                                <!-- Nút Xóa -->
-                                <a th:href="@{/admin/promotion/delete/{id}(id=${p.id})}" 
+                                <!-- Nút Xóa: CHỈ cho xóa khi ĐÃ HẾT HẠN -->
+                                <a th:if="${p.isExpired()}"
+                                   th:href="@{/admin/promotion/delete/{id}(id=${p.id})}" 
                                    class="btn btn-sm btn-light border-0 text-danger rounded-2 px-2 py-1 action-btn"
-                                   onclick="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi này? (Lưu ý: Không thể xóa khuyến mãi đang hoạt động)');"
-                                   title="Xóa khuyến mãi">
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn chương trình khuyến mãi đã hết hạn này?');"
+                                   title="Xóa khuyến mãi đã hết hạn">
                                     <i class="far fa-trash-alt"></i>
                                 </a>
+
+                                <!-- Nút Xóa bị khóa khi VẪN CÒN HẠN -->
+                                <button th:unless="${p.isExpired()}"
+                                        type="button"
+                                        class="btn btn-sm btn-light border-0 text-secondary opacity-50 rounded-2 px-2 py-1"
+                                        onclick="alert('Từ chối thao tác: Khuyến mãi này vẫn còn hạn sử dụng, không thể xóa!');"
+                                        title="Chỉ được xóa khuyến mãi đã hết hạn">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
                             </div>
 
                             <!-- Modal Chỉnh sửa Khuyến mại -->

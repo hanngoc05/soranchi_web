@@ -32,9 +32,11 @@
                                 <input type="text" th:field="*{name}" class="form-control rounded-3" placeholder="Ví dụ: Trà Sữa Trân Châu Hoàng Kim" required>
                             </div>
 
+                            <!-- Giá tiền min="1000" -->
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Giá tiền (VNĐ)</label>
-                                <input type="number" name="price" th:value="${product.price != null ? #numbers.formatDecimal(product.price, 0, 0) : 0}" min="0" step="1000" class="form-control rounded-3" required>                            </div>
+                                <input type="number" name="price" th:value="${product.price != null ? #numbers.formatDecimal(product.price, 0, 0) : 0}" min="1000" step="1000" class="form-control rounded-3" required>
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Số lượng trong kho</label>
                                 <input type="number" th:field="*{quantity}" min="0" class="form-control rounded-3" required>

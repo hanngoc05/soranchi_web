@@ -23,6 +23,11 @@ public class Review {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "order_detail_id")
+    private Integer orderDetailId;
+    
+    public Integer getOrderDetailId() { return orderDetailId; }
+    public void setOrderDetailId(Integer orderDetailId) { this.orderDetailId = orderDetailId; }
 
     // Hàm bổ trợ để hiển thị ngày tháng ra HTML cho đẹp (dd/MM/yyyy)
     public String getFormattedDate() {

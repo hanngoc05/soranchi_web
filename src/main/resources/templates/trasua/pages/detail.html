@@ -56,7 +56,7 @@
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                     </div>
-                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">4.9 ⭐</span>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;" th:text="${avgRating} + ' ⭐'">0.0 ⭐</span>
                     <span class="text-muted small">(<span id="review-count-badge" th:text="${totalReviews}">0</span> đánh giá thực tế)</span>
                 </div>
 
@@ -131,7 +131,7 @@
     <hr class="my-5 opacity-25">
 
     <!-- Khu vực đánh giá -->
-    <div class="row g-4" th:if="${product != null}">
+    <div class="row g-4" id="review-section" th:if="${product != null}">
         <div class="col-lg-7">
             <h4 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
                 💬 KHÁCH HÀNG NÓI GÌ VỀ MÓN NÀY?
@@ -159,38 +159,18 @@
 
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 p-4 bg-light border-top border-warning border-4">
-                <h5 class="fw-bold text-dark mb-1">✨ CHIA SẺ CẢM NHẬN</h5>
-                <p class="text-muted small mb-3">Ý kiến của bạn giúp cải thiện chất lượng Soranchi mỗi ngày</p>
-                
-                <form id="form-submit-review-soranchi" th:action="@{/product/review}" method="post">
-                    <input type="hidden" name="productId" th:value="${product.id}">
-                    <input type="hidden" name="rating" id="input-hidden-rating-value" value="5">
-
-                    <div class="mb-3">
-                        <label class="form-label d-block fw-bold text-secondary small mb-1">Chọn số sao đánh giá:</label>
-                        <div class="d-flex gap-2 text-warning fs-4" id="star-rating-selector" style="cursor: pointer;">
-                            <i class="fas fa-star" data-index="1"></i>
-                            <i class="fas fa-star" data-index="2"></i>
-                            <i class="fas fa-star" data-index="3"></i>
-                            <i class="fas fa-star" data-index="4"></i>
-                            <i class="fas fa-star" data-index="5"></i>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary small mb-1">Nội dung bình luận:</label>
-                        <textarea name="comment" id="review-comment-text" class="form-control border-0 p-3 shadow-sm text-dark" rows="3" style="border-radius: 10px; font-size: 0.9rem;" placeholder="Cảm nhận của bạn về hương vị, độ ngọt, đá hoặc cách phục vụ của món ăn này..." required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold text-warning border border-warning" style="border-radius: 8px; letter-spacing: 0.5px;">
-                        <i class="fas fa-paper-plane me-2"></i> GỬI ĐÁNH GIÁ NGAY
-                    </button>
-                </form>
+                <h5 class="fw-bold text-dark mb-1">✨ ĐÁNH GIÁ TỪ KHÁCH MUA HÀNG</h5>
+                <p class="text-muted small mb-3">
+                    Để đảm bảo tính minh bạch, chỉ khách hàng đã đặt mua và nhận hàng thành công mới có thể gửi đánh giá cho sản phẩm này.
+                </p>
+                <a href="/my-orders" class="btn btn-dark w-100 py-2.5 fw-bold text-warning border border-warning" style="border-radius: 8px;">
+                    <i class="fas fa-receipt me-2"></i> ĐẾN ĐƠN HÀNG CỦA TÔI ĐỂ ĐÁNH GIÁ
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Script điều khiển số lượng và hiển thị lỗi tức thì -->
+    <!-- Script điều khiển số lượng, hiển thị lỗi tức thì và cuộn tới khu vực đánh giá -->
     <script th:inline="javascript">
         const maxStock = /*[[${product != null ? product.quantity : 0}]]*/ 0;
 
@@ -230,61 +210,36 @@
             }
         }
 
-        // Logic điều khiển Đánh giá & Chọn sao
-        (function() {
-            let selectedRatingStars = 5;
-            const starSelectorBox = document.getElementById('star-rating-selector');
-            const inputHiddenRating = document.getElementById('input-hidden-rating-value');
-            if (!starSelectorBox) return;
-            
-            const starsCollection = starSelectorBox.querySelectorAll('i');
+        // Kiểm tra form thêm vào giỏ hàng trước khi gửi
+        const formAdd = document.getElementById('form-add-to-cart');
+        if (formAdd) {
+            formAdd.addEventListener('submit', function(e) {
+                const qtyInput = document.getElementById('quantity');
+                const requestedQty = parseInt(qtyInput.value) || 0;
 
-            starsCollection.forEach(star => {
-                star.addEventListener('mouseover', function() {
-                    highlightStars(parseInt(this.getAttribute('data-index')));
-                });
-                star.addEventListener('mouseleave', function() {
-                    highlightStars(selectedRatingStars);
-                });
-                star.addEventListener('click', function() {
-                    selectedRatingStars = parseInt(this.getAttribute('data-index'));
-                    if (inputHiddenRating) {
-                        inputHiddenRating.value = selectedRatingStars;
-                    }
-                    highlightStars(selectedRatingStars);
-                });
+                if (maxStock <= 0) {
+                    e.preventDefault();
+                    showStockAlert("Sản phẩm này hiện tại đã hết hàng trong kho!");
+                    return;
+                }
+
+                if (requestedQty > maxStock) {
+                    e.preventDefault();
+                    showStockAlert(`Trong kho chỉ còn ${maxStock} ly! Vui lòng chọn số lượng phù hợp.`);
+                }
             });
+        }
 
-            function highlightStars(index) {
-                starsCollection.forEach(star => {
-                    if (parseInt(star.getAttribute('data-index')) <= index) {
-                        star.className = 'fas fa-star';
-                    } else {
-                        star.className = 'far fa-star';
-                    }
-                });
+        // Tự động cuộn xuống khu vực đánh giá nếu URL có #review-section
+        if (window.location.hash === '#review-section') {
+            const scrollZone = document.getElementById('detail-scroll-zone');
+            const reviewSec = document.getElementById('review-section');
+            if (scrollZone && reviewSec) {
+                setTimeout(() => {
+                    scrollZone.scrollTo({ top: reviewSec.offsetTop - 20, behavior: 'smooth' });
+                }, 150);
             }
-
-            // Kiểm tra form trước khi gửi
-            const formAdd = document.getElementById('form-add-to-cart');
-            if (formAdd) {
-                formAdd.addEventListener('submit', function(e) {
-                    const qtyInput = document.getElementById('quantity');
-                    const requestedQty = parseInt(qtyInput.value) || 0;
-
-                    if (maxStock <= 0) {
-                        e.preventDefault();
-                        showStockAlert("Sản phẩm này hiện tại đã hết hàng trong kho!");
-                        return;
-                    }
-
-                    if (requestedQty > maxStock) {
-                        e.preventDefault();
-                        showStockAlert(`Trong kho chỉ còn ${maxStock} ly! Vui lòng chọn số lượng phù hợp.`);
-                    }
-                });
-            }
-        })();
+        }
     </script>
 
     <style>

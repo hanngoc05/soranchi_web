@@ -3,6 +3,16 @@
 <body>
 <div th:fragment="content" class="w-100 p-3">
     <h4 class="fw-bold text-dark mb-4" style="border-left: 4px solid #d4a017; padding-left: 10px;">📋 ĐƠN HÀNG CỦA TÔI</h4>
+
+    <!-- Thông báo thành công / lỗi -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small mb-3" role="alert">
+        <i class="fas fa-check-circle me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small mb-3" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     
     <div th:if="${#lists.isEmpty(orders)}" class="text-muted p-5 text-center bg-white border rounded-4 font-monospace">
         Bạn chưa từng đặt đơn hàng nào tại hệ thống Soranchi Tea.
@@ -10,31 +20,47 @@
 
     <div th:unless="${#lists.isEmpty(orders)}" class="d-flex flex-column gap-3">
         <div th:each="order : ${orders}" class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-4"
-             th:style="${order.status == 'CHỜ XÁC NHẬN'} ? 'border-color: #ff9800 !important' : (${order.status == 'HOÀN THÀNH'} ? 'border-color: #4caf50 !important' : 'border-color: #f44336 !important')">
+             th:style="${order.status == 'CHỜ XÁC NHẬN'} ? 'border-color: #ff9800 !important' : (${order.status == 'HOÀN THÀNH' or order.status == 'ĐÃ GIAO'} ? 'border-color: #4caf50 !important' : 'border-color: #f44336 !important')">
             
             <div class="d-flex justify-content-between align-items-center pb-2 border-bottom opacity-75 small">
                 <div>
                     <span class="fw-bold text-dark fs-6" th:text="'Đơn hàng #' + ${order.id}"></span>
-                    <span class="ms-2 text-secondary" th:text="'Ngày đặt: ' + ${#temporaryFolder != null ? order.createdAt : order.createdAt}"></span>
+                    <span class="ms-2 text-secondary" th:text="'Ngày đặt: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
                 </div>
                 <span th:text="${order.status}" class="badge fw-bold px-2.5 py-1.5 rounded-pill"
-                      th:classappend="${order.status == 'CHỜ XÁC NHẬN'} ? 'bg-warning text-dark' : (${order.status == 'HOÀN THÀNH'} ? 'bg-success' : 'bg-danger')"></span>
+                      th:classappend="${order.status == 'CHỜ XÁC NHẬN'} ? 'bg-warning text-dark' : (${order.status == 'HOÀN THÀNH' or order.status == 'ĐÃ GIAO'} ? 'bg-success' : 'bg-danger')"></span>
             </div>
 
             <div class="py-3">
-                <div th:each="detail : ${detailRepo.findByOrderId(order.id)}" class="d-flex justify-content-between align-items-center mb-2 small text-dark">
+                <div th:each="detail : ${detailRepo.findByOrderId(order.id)}" class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light small text-dark">
                     <div class="d-flex align-items-center gap-2">
-                        <img th:src="@{'/image/' + ${detail.imageUrl}}" alt="món" class="rounded object-fit-cover" style="width: 40px; height: 40px;">
+                        <img th:src="@{'/image/' + ${detail.imageUrl}}" alt="món" class="rounded object-fit-cover" style="width: 45px; height: 45px;">
                         <div>
-                            <span class="fw-semibold d-block" th:text="${detail.productName}"></span>
-                            <span class="text-muted" th:text="'Số lượng: ' + ${detail.quantity}"></span>
+                            <a th:href="@{/product/{id}(id=${detail.productId})}" class="fw-semibold d-block text-dark text-decoration-none" th:text="${detail.productName}"></a>
+                            <span class="text-muted" th:text="'Số lượng: ' + ${detail.quantity} + ' | ' + ${#numbers.formatDecimal(detail.price * detail.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                         </div>
                     </div>
-                    <span class="fw-bold text-secondary" th:text="${#numbers.formatDecimal(detail.price * detail.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+
+                    <!-- Nút Đánh giá / Đã đánh giá bên cạnh từng sản phẩm -->
+                    <div th:if="${order.status == 'HOÀN THÀNH' or order.status == 'ĐÃ GIAO'}">
+                        <button th:if="${!detail.reviewed}" type="button"
+                                class="btn btn-sm btn-warning fw-semibold rounded-pill px-3"
+                                th:attr="data-detail-id=${detail.id}, data-product-name=${detail.productName}"
+                                onclick="openReviewModal(this)">
+                            ⭐ Đánh giá
+                        </button>
+
+                        <a th:if="${detail.reviewed}"
+                        th:href="@{'/product/' + ${detail.productId} + '#review-section'}"
+                        class="btn btn-sm btn-light text-success border border-success-subtle fw-semibold rounded-pill px-3"
+                        title="Bấm để xem đánh giá của bạn">
+                            ✔ Đã đánh giá
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+            <div class="d-flex justify-content-between align-items-center pt-1">
                 <div>
                     <span class="small text-muted">Tổng thanh toán: </span>
                     <span class="fw-bold text-danger fs-5" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
@@ -42,13 +68,126 @@
                 <div>
                     <a th:if="${order.status == 'CHỜ XÁC NHẬN'}" th:href="@{/order/cancel/{id}(id=${order.id})}" 
                        class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn hàng</a>
-                    
-                    <a th:if="${order.status == 'HOÀN THÀNH'}" th:href="@{/product/{id}(id=1)}" 
-                       class="btn btn-sm btn-outline-success rounded-pill px-3">⭐ Viết đánh giá</a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal Biểu mẫu Đánh giá sản phẩm (Bước 2 & Bước 3) -->
+    <div class="modal fade" id="reviewProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/product/review}" method="post" id="orderReviewForm" class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <input type="hidden" name="orderDetailId" id="modalOrderDetailId">
+                <input type="hidden" name="rating" id="modalRatingInput" value="0">
+
+                <div class="modal-header bg-dark text-white px-4 py-3">
+                    <h6 class="modal-title fw-bold mb-0">⭐ Đánh giá sản phẩm</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Sản phẩm đánh giá:</span>
+                        <span class="fw-bold text-dark fs-6" id="modalProductName">Tên món</span>
+                    </div>
+
+                    <div id="modalReviewError" class="alert alert-danger py-2 px-3 small d-none"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary d-block">Chọn số sao (bắt buộc):</label>
+                        <div class="d-flex gap-2 text-warning fs-3" id="modalStarSelector" style="cursor: pointer;">
+                            <i class="far fa-star" data-star="1"></i>
+                            <i class="far fa-star" data-star="2"></i>
+                            <i class="far fa-star" data-star="3"></i>
+                            <i class="far fa-star" data-star="4"></i>
+                            <i class="far fa-star" data-star="5"></i>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary">Nội dung nhận xét (tối đa 500 ký tự):</label>
+                        <textarea name="comment" id="modalCommentInput" class="form-control rounded-3" rows="3"
+                                  placeholder="Chia sẻ cảm nhận của bạn về hương vị món nước..."></textarea>
+                        <div class="text-end text-muted mt-1" style="font-size: 0.75rem;">
+                            <span id="commentCharCount">0</span>/500 ký tự
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light px-4 py-3">
+                    <button type="button" class="btn btn-light btn-sm px-3 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark btn-sm px-4 rounded-3 fw-bold text-warning">Gửi đánh giá</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentModalStars = 0;
+
+        function paintModalStars(count) {
+            document.querySelectorAll('#modalStarSelector i').forEach(star => {
+                const val = parseInt(star.getAttribute('data-star'));
+                star.className = val <= count ? 'fas fa-star' : 'far fa-star';
+            });
+        }
+
+        function openReviewModal(btn) {
+            currentModalStars = 0;
+            document.getElementById('modalOrderDetailId').value = btn.getAttribute('data-detail-id');
+            document.getElementById('modalProductName').innerText = btn.getAttribute('data-product-name');
+            document.getElementById('modalRatingInput').value = 0;
+            document.getElementById('modalCommentInput').value = '';
+            document.getElementById('commentCharCount').innerText = '0';
+            document.getElementById('modalReviewError').classList.add('d-none');
+            paintModalStars(0);
+
+            const modal = new bootstrap.Modal(document.getElementById('reviewProductModal'));
+            modal.show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#modalStarSelector i').forEach(star => {
+                star.addEventListener('mouseover', function () {
+                    paintModalStars(parseInt(this.getAttribute('data-star')));
+                });
+                star.addEventListener('mouseleave', function () {
+                    paintModalStars(currentModalStars);
+                });
+                star.addEventListener('click', function () {
+                    currentModalStars = parseInt(this.getAttribute('data-star'));
+                    document.getElementById('modalRatingInput').value = currentModalStars;
+                    paintModalStars(currentModalStars);
+                    document.getElementById('modalReviewError').classList.add('d-none');
+                });
+            });
+
+            const commentInput = document.getElementById('modalCommentInput');
+            commentInput.addEventListener('input', function () {
+                document.getElementById('commentCharCount').innerText = this.value.length;
+            });
+
+            // Rẽ nhánh 1 & Rẽ nhánh 2 kiểm tra ngay trên giao diện trước khi gửi
+            document.getElementById('orderReviewForm').addEventListener('submit', function (e) {
+                const errorBox = document.getElementById('modalReviewError');
+                const rating = parseInt(document.getElementById('modalRatingInput').value) || 0;
+                const comment = commentInput.value.trim();
+
+                if (rating < 1 || rating > 5) {
+                    e.preventDefault();
+                    errorBox.innerText = 'Vui lòng chọn số sao đánh giá (từ 1 đến 5 sao) trước khi gửi!';
+                    errorBox.classList.remove('d-none');
+                    return;
+                }
+
+                if (comment.length > 500) {
+                    e.preventDefault();
+                    errorBox.innerText = 'Nội dung nhận xét vượt quá 500 ký tự. Vui lòng rút gọn nội dung!';
+                    errorBox.classList.remove('d-none');
+                }
+            });
+        });
+    </script>
 </div>
 </body>
 </html>

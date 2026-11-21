@@ -55,10 +55,6 @@
                             <a th:href="@{/admin/product/delete/{id}(id=${product.id})}" class="btn btn-sm btn-dark text-white px-3 fw-bold" onclick="return confirm('Bạn chắc chắn muốn xóa không?')">Xóa</a>
                         </div>
                     </div>
-                    
-                    <div th:if="${#lists.isEmpty(products)}" class="p-3 text-center text-muted bg-white" style="display: none;">
-                        Chưa có sản phẩm nào trong danh mục này.
-                    </div>
                 </div>
             </div>
             
@@ -112,6 +108,7 @@
 
     </div>
 
+    <!-- Modal chọn Đường, Đá và Topping động từ bảng toppings -->
     <div class="modal fade" id="toppingModal" tabindex="-1" aria-labelledby="toppingModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
@@ -175,29 +172,18 @@
                         </div>
                     </div>
 
-                    <div class="option-group">
+                    <!-- Danh sách Topping lấy trực tiếp từ bảng toppings (trạng thái Đang bán) -->
+                    <div class="option-group" th:if="${activeToppings != null and !#lists.isEmpty(activeToppings)}">
                         <label class="fw-bold text-dark mb-2">🧋 Thêm Topping</label>
                         <div class="list-group border-0">
-                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
+                            <label th:each="tp : ${activeToppings}" class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
                                 <div class="d-flex align-items-center gap-2">
-                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Trân châu hoàng kim" data-price="6000">
-                                    <span class="text-dark">Trân châu hoàng kim</span>
+                                    <input class="form-check-input option-topping border-dark" type="checkbox"
+                                           th:value="${tp.name}"
+                                           th:data-price="${tp.price}">
+                                    <span class="text-dark" th:text="${tp.name}">Tên topping</span>
                                 </div>
-                                <span class="text-muted small">+6,000đ</span>
-                            </label>
-                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
-                                <div class="d-flex align-items-center gap-2">
-                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Thạch sương sáo" data-price="5000">
-                                    <span class="text-dark">Thạch sương sáo</span>
-                                </div>
-                                <span class="text-muted small">+5,000đ</span>
-                            </label>
-                            <label class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2 bg-transparent style-cursor">
-                                <div class="d-flex align-items-center gap-2">
-                                    <input class="form-check-input option-topping border-dark" type="checkbox" value="Kem cheese" data-price="10000">
-                                    <span class="text-dark">Kem cheese</span>
-                                </div>
-                                <span class="text-muted small">+10,000đ</span>
+                                <span class="text-muted small" th:text="'+' + ${#numbers.formatDecimal(tp.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">+0đ</span>
                             </label>
                         </div>
                     </div>
@@ -228,7 +214,6 @@
 
     <script>
         (function() {
-            // 1. Logic trượt cuộn mỏ neo Sidebar gốc
             setTimeout(function() {
                 const scrollZone = document.getElementById("admin-scroll-zone") || document.getElementById("shop-scroll-zone");
                 const sidebarLinks = document.querySelectorAll('.sidebar-custom a[href^="#section-"], a[href^="#section-"]');
@@ -252,7 +237,6 @@
                 }
             }, 100);
 
-            // 2. Logic điều khiển Topping Modal thời gian thực (Realtime)
             const toppingModalElement = document.getElementById('toppingModal');
             if (!toppingModalElement) return;
             
@@ -277,23 +261,18 @@
                 return amount.toLocaleString('vi-VN');
             }
 
-            // ĐÃ SỬA DỨT KHOÁT: Khóa cứng giá phía trên ảnh luôn là giá gốc, tiền chỉ tăng ở nút bấm dưới cùng
             function calculateTotalPrice() {
                 let toppingValueSum = 0;
                 const activeToppings = document.querySelectorAll('.option-topping:checked');
                 activeToppings.forEach(checkbox => {
-                    toppingValueSum += parseInt(checkbox.getAttribute('data-price') || 0);
+                    toppingValueSum += parseFloat(checkbox.getAttribute('data-price') || 0);
                 });
                 
-                // Ép giá cạnh hình ảnh luôn cố định giá gốc ban đầu
                 modalRealtimePrice.textContent = formatMoney(currentBasePrice);
-                
-                // Nút bấm dưới cùng sẽ tăng tịnh tiến theo cả topping chọn thêm và số lượng
                 const totalFinalPrice = (currentBasePrice + toppingValueSum) * currentQuantity;
                 modalTotalPriceBtn.textContent = formatMoney(totalFinalPrice);
             }
 
-            // Bắt sự kiện click mở Modal
             document.addEventListener('click', function(e) {
                 const triggerBtn = e.target.closest('.btn-trigger-topping');
                 if (triggerBtn) {
@@ -320,12 +299,10 @@
                 }
             });
 
-            // Lắng nghe thay đổi topping
             document.querySelectorAll('.option-topping').forEach(checkbox => {
                 checkbox.addEventListener('change', calculateTotalPrice);
             });
 
-            // Bộ số lượng
             btnPlus.addEventListener('click', function() {
                 currentQuantity++;
                 inputQty.value = currentQuantity;
@@ -342,7 +319,6 @@
                 }
             });
 
-            // Đóng gói chuỗi text options gửi lên Java Controller
             document.getElementById('form-add-to-cart').addEventListener('submit', function() {
                 const sugarText = document.querySelector('.option-sugar:checked').value;
                 const iceText = document.querySelector('.option-ice:checked').value;
@@ -371,7 +347,6 @@
         .gold-separator-line { width: 100%; height: 2px; background-color: #e9ecef; margin-top: 12px; position: relative; }
         .gold-active-chunk { position: absolute; top: 0; left: 0; width: 100px; height: 100%; background-color: #d4a017; }
         
-        /* Style riêng biệt cho nút option check dạng Luxury */
         .btn-check:checked + .btn-outline-dark { background-color: #1a1a1a !important; color: #d4a017 !important; border-color: #1a1a1a !important; font-weight: bold; }
         .fs-7 { font-size: 0.85rem; }
         .style-cursor { cursor: pointer; }

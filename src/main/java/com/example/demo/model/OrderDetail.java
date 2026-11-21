@@ -21,6 +21,11 @@ public class OrderDetail {
     @Column(name = "image_url")
     private String imageUrl;
     
+    @Column(name = "is_reviewed")
+    private boolean isReviewed = false;
+
+    public boolean isReviewed() { return isReviewed; }
+    public void setReviewed(boolean reviewed) { isReviewed = reviewed; }
     private double price;
     private int quantity;
 

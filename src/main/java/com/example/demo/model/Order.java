@@ -26,7 +26,11 @@ public class Order {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "shipping_unit_id")
+    private Integer shippingUnitId;
 
+    public Integer getShippingUnitId() { return shippingUnitId; }
+    public void setShippingUnitId(Integer shippingUnitId) { this.shippingUnitId = shippingUnitId; }
     public Order() {}
 
     // Getters and Setters

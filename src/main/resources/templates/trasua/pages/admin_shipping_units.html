@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="container-fluid py-4 px-3 px-md-4">
+
+    <!-- Tiêu đề & Nút Thêm -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Quản lý đơn vị vận chuyển</h4>
+            <p class="text-muted small mb-0">Thiết lập đối tác giao hàng, biểu phí vận chuyển và thời gian giao dự kiến</p>
+        </div>
+        <button class="btn btn-dark btn-sm px-3 py-2 fw-semibold rounded-3 shadow-sm d-flex align-items-center gap-2"
+                data-bs-toggle="modal" data-bs-target="#addShippingModal"
+                style="background-color: #1a1a1a; border-color: #1a1a1a;">
+            <i class="fas fa-plus text-warning" style="font-size: 0.8rem;"></i>
+            <span>Thêm đơn vị vận chuyển</span>
+        </button>
+    </div>
+
+    <!-- Thông báo kết quả -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center" role="alert">
+        <i class="fas fa-check-circle me-2 text-success fs-6"></i>
+        <span class="fw-medium text-dark" th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" style="padding: 0.9rem;"></button>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-triangle me-2 text-danger fs-6"></i>
+        <span class="fw-medium text-danger" th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" style="padding: 0.9rem;"></button>
+    </div>
+
+    <!-- Bước 1: Danh sách đơn vị vận chuyển (Mã, Tên, Phí, Trạng thái) -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                <thead style="background-color: #f8fafc; border-bottom: 1px solid #eef2f6;">
+                    <tr class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                        <th class="ps-4 py-3">Mã đơn vị</th>
+                        <th>Tên đơn vị vận chuyển</th>
+                        <th>Phí vận chuyển</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(shippingUnits)}">
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-shipping-fast d-block mb-2 text-secondary opacity-50" style="font-size: 2rem;"></i>
+                            Chưa có đơn vị vận chuyển nào trong hệ thống.
+                        </td>
+                    </tr>
+                    <tr th:each="u : ${shippingUnits}">
+                        <td class="ps-4 py-3">
+                            <span class="badge text-dark font-monospace fw-bold px-2.5 py-1 rounded-2 border"
+                                  style="background-color: #f8fafc; border-color: #e2e8f0 !important;"
+                                  th:text="${u.unitCode != null ? u.unitCode : ('DVVC#' + u.id)}">
+                            </span>
+                        </td>
+
+                        <td class="fw-bold text-dark" th:text="${u.name}"></td>
+
+                        <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(u.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+
+                        <td class="text-center">
+                            <span th:if="${'NGỪNG HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}"
+                                  class="badge rounded-pill px-2.5 py-1 fw-normal"
+                                  style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2;">
+                                Ngừng hoạt động
+                            </span>
+                            <span th:unless="${'NGỪNG HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}"
+                                  class="badge rounded-pill px-2.5 py-1 fw-medium"
+                                  style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
+                                • Hoạt động
+                            </span>
+                        </td>
+
+                        <td class="text-end pe-4">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <!-- Bước 2: Nút Xem chi tiết -->
+                                <button type="button" class="btn btn-sm btn-light border-0 text-info rounded-2 px-2 py-1 action-btn"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#viewUnitModal' + ${u.id}"
+                                        title="Xem chi tiết">
+                                    <i class="far fa-eye"></i>
+                                </button>
+
+                                <!-- Bước 4: Nút Sửa -->
+                                <button type="button" class="btn btn-sm btn-light border-0 text-secondary rounded-2 px-2 py-1 action-btn"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#editUnitModal' + ${u.id}"
+                                        title="Sửa thông tin">
+                                    <i class="far fa-edit"></i>
+                                </button>
+
+                                <!-- Bước 5: Nút Xóa có xác nhận -->
+                                <a th:href="@{/admin/shipping-unit/delete/{id}(id=${u.id})}"
+                                   class="btn btn-sm btn-light border-0 text-danger rounded-2 px-2 py-1 action-btn"
+                                   onclick="return confirm('Bạn có đồng ý xóa đơn vị vận chuyển này không? (Nếu đã có đơn hàng sẽ tự chuyển sang Ngừng hoạt động)');"
+                                   title="Xóa">
+                                    <i class="far fa-trash-alt"></i>
+                                </a>
+                            </div>
+
+                            <!-- Modal Bước 2: Xem chi tiết đơn vị vận chuyển -->
+                            <div class="modal fade text-start" th:id="'viewUnitModal' + ${u.id}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                        <div class="modal-header px-4 py-3 bg-light border-bottom">
+                                            <h6 class="modal-title fw-bold text-dark mb-0"><i class="fas fa-truck text-warning me-2"></i>Chi tiết đơn vị vận chuyển</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4 small">
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <span class="text-muted d-block">Mã đơn vị:</span>
+                                                    <strong class="font-monospace text-primary" th:text="${u.unitCode}"></strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <span class="text-muted d-block">Trạng thái:</span>
+                                                    <span th:if="${'NGỪNG HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}" class="badge bg-danger">Ngừng hoạt động</span>
+                                                    <span th:unless="${'NGỪNG HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}" class="badge bg-success">Hoạt động</span>
+                                                </div>
+                                                <div class="col-12">
+                                                    <span class="text-muted d-block">Tên đơn vị vận chuyển:</span>
+                                                    <strong class="fs-6 text-dark" th:text="${u.name}"></strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <span class="text-muted d-block">Phí vận chuyển:</span>
+                                                    <strong class="text-danger fs-6" th:text="${#numbers.formatDecimal(u.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <span class="text-muted d-block">Thời gian giao dự kiến:</span>
+                                                    <strong class="text-dark" th:text="${u.estimatedTime}"></strong>
+                                                </div>
+                                                <div class="col-12 border-top pt-2">
+                                                    <span class="text-muted d-block mb-1">Mô tả:</span>
+                                                    <p class="text-secondary mb-0" th:text="${u.description != null and !u.description.isEmpty() ? u.description : 'Không có mô tả thêm.'}"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer px-4 py-2 bg-light border-top">
+                                            <button type="button" class="btn btn-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Đóng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modal Bước 4: Sửa đơn vị vận chuyển -->
+                            <div class="modal fade text-start" th:id="'editUnitModal' + ${u.id}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <form th:action="@{/admin/shipping-unit/save}" method="post"
+                                          onsubmit="return confirm('Bạn có đồng ý cập nhật thông tin đơn vị vận chuyển này không?');"
+                                          class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                        <input type="hidden" name="id" th:value="${u.id}">
+                                        <div class="modal-header px-4 py-3 bg-light border-bottom">
+                                            <h6 class="modal-title fw-bold text-dark mb-0">Cập nhật đơn vị vận chuyển</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold text-secondary">Tên đơn vị vận chuyển <span class="text-danger">*</span></label>
+                                                <input type="text" name="name" th:value="${u.name}" class="form-control rounded-3" required>
+                                            </div>
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-6">
+                                                    <label class="form-label small fw-semibold text-secondary">Phí vận chuyển (VNĐ) <span class="text-danger">*</span></label>
+                                                    <input type="number" name="shippingFee" th:value="${#numbers.formatDecimal(u.shippingFee, 0, 0)}" min="0" step="1000" class="form-control rounded-3" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small fw-semibold text-secondary">Thời gian giao dự kiến <span class="text-danger">*</span></label>
+                                                    <input type="text" name="estimatedTime" th:value="${u.estimatedTime}" class="form-control rounded-3" placeholder="VD: 30 - 45 phút" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold text-secondary">Trạng thái</label>
+                                                <select name="status" class="form-select rounded-3">
+                                                    <option value="HOẠT ĐỘNG" th:selected="${'HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}">Hoạt động</option>
+                                                    <option value="NGỪNG HOẠT ĐỘNG" th:selected="${'NGỪNG HOẠT ĐỘNG'.equalsIgnoreCase(u.status)}">Ngừng hoạt động</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label small fw-semibold text-secondary">Mô tả</label>
+                                                <textarea name="description" class="form-control rounded-3" rows="2" th:text="${u.description}"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer px-4 py-3 bg-light border-top">
+                                            <button type="button" class="btn btn-light btn-sm px-3 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Sửa</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Bước 3: Thêm mới đơn vị vận chuyển -->
+    <div class="modal fade" id="addShippingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/admin/shipping-unit/save}" method="post"
+                  onsubmit="return confirm('Bạn có đồng ý tạo mới đơn vị vận chuyển này không?');"
+                  class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header px-4 py-3 bg-light border-bottom">
+                    <h6 class="modal-title fw-bold text-dark mb-0">Thêm đơn vị vận chuyển mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Tên đơn vị vận chuyển <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control rounded-3" placeholder="VD: GrabExpress, ShopeeFood, Giao Hàng Nhanh..." required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Phí vận chuyển (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="shippingFee" min="0" step="1000" class="form-control rounded-3" placeholder="15000" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Thời gian giao dự kiến <span class="text-danger">*</span></label>
+                            <input type="text" name="estimatedTime" class="form-control rounded-3" placeholder="VD: 25 - 40 phút" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Trạng thái</label>
+                        <select name="status" class="form-select rounded-3">
+                            <option value="HOẠT ĐỘNG" selected>Hoạt động</option>
+                            <option value="NGỪNG HOẠT ĐỘNG">Ngừng hoạt động</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold text-secondary">Mô tả</label>
+                        <textarea name="description" class="form-control rounded-3" rows="2" placeholder="Phạm vi giao hàng, ghi chú biểu phí..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3 bg-light border-top">
+                    <button type="button" class="btn btn-light btn-sm px-3 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Tạo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .action-btn:hover { background-color: #f1f5f9 !important; }
+</style>
+</body>
+</html>
