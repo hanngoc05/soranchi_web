@@ -1,14 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="w-100 p-3">
-    <div class="card border-0 shadow-sm p-4 rounded bg-white">
-        <h4 class="fw-bold text-dark border-bottom pb-2">📜 ĐIỀU KHOẢN VÀ CHÍNH SÁCH</h4>
-        <div class="text-secondary small mt-3" style="line-height: 1.8;">
-            <h6 class="fw-bold text-dark">1. Quy định Đăng ký và Đánh giá</h6>
-            <p>Khách hàng bắt buộc phải tạo tài khoản và đăng nhập mới có thể gửi đánh giá cho các món ăn.</p>
-            <h6 class="fw-bold text-dark mt-3">2. Quy chuẩn Hình ảnh Đại diện</h6>
-            <p>Hệ thống yêu cầu khách hàng phải tải ảnh đại diện cá nhân hợp lệ từ thiết bị di động trong quá trình khởi tạo tài khoản thành viên.</p>
+<div th:fragment="content" class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="fw-bold text-dark mb-1"><i class="fas fa-file-contract text-warning me-2"></i>ĐIỀU KHOẢN VÀ CHÍNH SÁCH</h4>
+                <p class="text-muted small mb-0">Quy định sử dụng dịch vụ, đặt hàng và bảo mật tại Soranchi Milk Tea</p>
+            </div>
+            <span class="badge bg-dark text-warning px-3 py-2 rounded-pill">Cập nhật 2026</span>
+        </div>
+
+        <div class="text-secondary small" style="line-height: 1.85;">
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark"><i class="fas fa-user-check text-warning me-2"></i>1. Quy định Tài khoản & Đánh giá sản phẩm</h6>
+                <p class="mb-0">Khách hàng cần đăng ký tài khoản thành viên và đăng nhập hệ thống để đặt hàng trực tuyến. Chỉ những đơn hàng đã giao thành công (trạng thái <strong>Hoàn thành</strong>) mới được quyền gửi đánh giá sao và nhận xét cho từng sản phẩm.</p>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark"><i class="fas fa-shipping-fast text-warning me-2"></i>2. Chính sách Giao hàng & Vận chuyển</h6>
+                <p class="mb-0">Soranchi hỗ trợ giao hàng hỏa tốc nội thành trong vòng <strong>15 – 45 phút</strong> tùy theo phương thức vận chuyển khách hàng lựa chọn. Đồ uống được đóng gói seal nắp chắc chắn, giữ nhiệt và đá riêng theo yêu cầu.</p>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark"><i class="fas fa-undo-alt text-warning me-2"></i>3. Chính sách Hủy đơn & Đổi trả</h6>
+                <p class="mb-0">Quý khách có thể chủ động hủy đơn hàng trực tiếp tại mục <em>"Đơn hàng của tôi"</em> khi đơn đang ở trạng thái <strong>Chờ xác nhận</strong>. Trường hợp đồ uống giao sai món, đổ vỡ do vận chuyển, cửa hàng cam kết pha chế lại và giao bù miễn phí 100%.</p>
+            </div>
+
+            <div>
+                <h6 class="fw-bold text-dark"><i class="fas fa-shield-alt text-warning me-2"></i>4. Bảo mật thông tin khách hàng</h6>
+                <p class="mb-0">Mọi thông tin cá nhân (họ tên, số điện thoại, địa chỉ nhận hàng) chỉ được sử dụng cho mục đích xử lý đơn hàng và chăm sóc khách hàng tại Soranchi Milk Tea, tuyệt đối không chia sẻ cho bên thứ ba.</p>
+            </div>
         </div>
     </div>
 </div>

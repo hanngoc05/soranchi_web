@@ -43,23 +43,29 @@
                     <div class="row align-items-center g-3">
                         <!-- Ảnh, Tên & Thông tin chi tiết (Size, Đá/Đường, Topping) -->
                         <div class="col-md-7 d-flex align-items-start gap-3">
-                            <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : ('/image/' + item.imageUrl)}"
-                                 class="rounded-3 border mt-1" width="72" height="72" style="object-fit: cover;"
-                                 onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
+                            <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : ('/images/' + item.imageUrl)}"
+                                class="rounded-3 border mt-1" width="72" height="72" style="object-fit: cover;"
+                                onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
                             
                             <div class="flex-grow-1">
-                                <h6 class="fw-bold text-dark mb-1" th:text="${item.name}">Tên trà sữa</h6>
+                                <h6 class="fw-bold text-dark mb-1" th:text="${item.name}">Tên món</h6>
                                 
-                                <!-- Hiển thị rõ Topping đi kèm (khớp với Modal chọn món) -->
-                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                <!-- Chỉ hiển thị Size, Đường/Đá, Topping nếu món có (Đồ uống) -->
+                                <div class="d-flex flex-wrap gap-1 mb-2"
+                                     th:if="${(item.size != null and !item.size.isEmpty()) or (item.note != null and !item.note.isEmpty()) or (item.toppings != null and !item.toppings.isEmpty())}">
+                                    <span th:if="${item.size != null and !item.size.isEmpty()}"
+                                          class="badge bg-dark text-warning fw-medium">
+                                        <i class="fas fa-glass-whiskey me-1"></i>Size <span th:text="${item.size}">S</span>
+                                    </span>
+
+                                    <span th:if="${item.note != null and !item.note.isEmpty()}"
+                                          class="badge bg-light text-dark border fw-normal">
+                                        <span th:text="${item.note}"></span>
+                                    </span>
+
                                     <span th:if="${item.toppings != null and !item.toppings.isEmpty()}" 
                                           class="badge bg-warning-subtle text-dark border border-warning-subtle fw-medium">
                                         <i class="fas fa-plus-circle text-warning me-1"></i>Topping: <span th:text="${item.toppings}"></span>
-                                    </span>
-                                    
-                                    <span th:if="${item.toppings == null or item.toppings.isEmpty()}" 
-                                          class="badge bg-light text-secondary border fw-normal">
-                                        Không topping thêm
                                     </span>
                                 </div>
 

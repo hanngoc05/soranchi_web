@@ -123,35 +123,20 @@ public class ChatbotController {
         return false;
     }
 
-    private CuocHoiThoai getOrCreateCuocHoiThoai(HttpSession session) {
-        User user = (User) session.getAttribute("loggedInUser");
-        String sessionId = session.getId();
+private CuocHoiThoai getOrCreateCuocHoiThoai(HttpSession session) {
+    User user = (User) session.getAttribute("loggedInUser");
+    int targetUserId = (user != null) ? user.getId() : 1; // Nếu chưa đăng nhập thì gán tạm tài khoản mặc định id=1
 
-        if (user != null) {
-            // Ưu tiên lấy lịch sử riêng theo từng tài khoản đăng nhập
-            CuocHoiThoai userChat = cuocHoiThoaiRepository
-                    .findFirstByMaNguoiDungAndTrangThaiOrderByThoiGianTaoDesc(user.getId(), "ACTIVE");
-            if (userChat == null) {
-                userChat = new CuocHoiThoai();
-                userChat.setSessionId(sessionId);
-                userChat.setMaNguoiDung(user.getId());
-                userChat.setTieuDe("Tư vấn trà sữa Soranchi");
-                userChat = cuocHoiThoaiRepository.save(userChat);
-            }
-            return userChat;
-        }
-
-        // Khách vãng lai chưa đăng nhập: tách theo sessionId và chỉ lấy hội thoại chưa gắn user
-        CuocHoiThoai guestChat = cuocHoiThoaiRepository
-                .findFirstBySessionIdAndMaNguoiDungIsNullAndTrangThaiOrderByThoiGianTaoDesc(sessionId, "ACTIVE");
-        if (guestChat == null) {
-            guestChat = new CuocHoiThoai();
-            guestChat.setSessionId(sessionId);
-            guestChat.setTieuDe("Tư vấn trà sữa Soranchi");
-            guestChat = cuocHoiThoaiRepository.save(guestChat);
-        }
-        return guestChat;
+    CuocHoiThoai chat = cuocHoiThoaiRepository
+            .findFirstByMaNguoiDungAndTrangThaiOrderByThoiGianTaoDesc(targetUserId, "ACTIVE");
+    if (chat == null) {
+        chat = new CuocHoiThoai();
+        chat.setMaNguoiDung(targetUserId);
+        chat.setTieuDe("Tư vấn trà sữa Soranchi");
+        chat = cuocHoiThoaiRepository.save(chat);
     }
+    return chat;
+}
 
     private String taoPrompt(String question, List<TinNhan> history, List<Product> products, List<Promotion> promotions) {
         StringBuilder sb = new StringBuilder();

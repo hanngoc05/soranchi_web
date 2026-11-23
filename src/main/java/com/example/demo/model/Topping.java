@@ -3,20 +3,25 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "toppings")
+@Table(name = "Topping")
 public class Topping {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_topping")
     private int id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "ten_topping", nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "gia", nullable = false)
     private double price;
 
-    private String status = "Đang bán"; // "Đang bán" hoặc "Ngừng bán"
+    @Column(name = "mo_ta")
+    private String description;
+
+    @Column(name = "trang_thai", nullable = false)
+    private String status = "ACTIVE";
 
     public Topping() {}
 
@@ -28,6 +33,9 @@ public class Topping {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

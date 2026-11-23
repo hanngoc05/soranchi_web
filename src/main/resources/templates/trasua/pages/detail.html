@@ -29,11 +29,11 @@
     <div class="row g-5" th:if="${product != null}">
         <div class="col-12 col-lg-6">
             <div class="product-image-container shadow-sm rounded overflow-hidden bg-white p-2 border">
-                <img th:src="@{'/image/' + ${product.imageUrl}}" 
-                     th:alt="${product.name}" 
-                     class="img-fluid w-100 rounded" 
-                     style="object-fit: cover; min-height: 400px; height: 450px;"
-                     onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
+                <img th:src="@{'/images/' + ${product.imageUrl}}" 
+                    th:alt="${product.name}" 
+                    class="img-fluid w-100 rounded" 
+                    style="object-fit: cover; min-height: 400px; height: 450px;"
+                    onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
             </div>
         </div>
 

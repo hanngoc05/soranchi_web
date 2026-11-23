@@ -5,21 +5,19 @@
 <div th:fragment="content" class="w-100">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- GIAO DIỆN ADMIN -->
     <div th:if="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}" id="admin-scroll-zone" class="scroll-zone-custom">
-        
         <div class="d-flex justify-content-between align-items-center mb-4 mt-2 pe-2">
             <h3 style="color: #1a1a1a; border-left: 5px solid #d4a017; padding-left: 10px; font-weight: bold; margin-bottom: 0;">
                 QUẢN LÝ SẢN PHẨM
             </h3>
-            <a th:href="@{/admin/product/add}" class="btn btn-dark btn-sm fw-bold px-3 py-2 border border-warning text-warning" style="border-radius: 6px; letter-spacing: 0.5px; font-size: 0.85rem;">
-                <i class="fas fa-plus-circle me-1"></i> ➕ THÊM SẢN PHẨM MỚI
+            <a th:href="@{/admin/product/add}" class="btn btn-dark btn-sm fw-bold px-3 py-2 border border-warning text-warning" style="border-radius: 6px; font-size: 0.85rem;">
+                <i class="fas fa-plus-circle me-1"></i> THÊM SẢN PHẨM MỚI
             </a>
         </div>
         
-        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.alias}" class="category-group-block">
-            
+        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.id}" class="category-group-block">
             <div class="luxury-menu-header">
                 <div class="d-flex align-items-center justify-content-between">
                     <h2 class="menu-title-text text-uppercase mb-0">
@@ -28,9 +26,7 @@
                     </h2>
                     <span class="luxury-sub-tag bg-dark text-warning">Soranchi Admin</span>
                 </div>
-                <div class="gold-separator-line">
-                    <div class="gold-active-chunk"></div>
-                </div>
+                <div class="gold-separator-line"><div class="gold-active-chunk"></div></div>
             </div>
             
             <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
@@ -41,10 +37,9 @@
                         <div class="col-2">Giá bán</div>
                         <div class="col-3">Hành động</div>
                     </div>
-                    
                     <div th:each="product : ${products}" th:if="${product.category == cat.name}" class="row g-0 p-3 align-items-center text-center border-bottom bg-white">
                         <div class="col-2 text-start ps-4">
-                            <img th:src="@{'/image/' + ${product.imageUrl}}" class="rounded-3 shadow-sm border" style="width: 60px; height: 60px; object-fit: cover;">
+                            <img th:src="@{'/images/' + ${product.imageUrl}}" class="rounded-3 shadow-sm border" style="width: 60px; height: 60px; object-fit: cover;">
                         </div>
                         <div class="col-5 text-start ps-3">
                             <h6 class="fw-bold text-dark mb-0 fs-6" th:text="${product.name}">Tên sản phẩm</h6>
@@ -57,14 +52,13 @@
                     </div>
                 </div>
             </div>
-            
         </div> 
     </div>
 
+    <!-- GIAO DIỆN KHÁCH HÀNG -->
     <div th:unless="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}" id="shop-scroll-zone" class="scroll-zone-custom">
         
-        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.alias}" class="category-group-block">
-            
+        <div th:each="cat : ${globalCategories}" th:id="'section-' + ${cat.id}" class="category-group-block">
             <div class="luxury-menu-header">
                 <div class="d-flex align-items-center justify-content-between">
                     <h2 class="menu-title-text text-uppercase mb-0">
@@ -73,16 +67,14 @@
                     </h2>
                     <span class="luxury-sub-tag">Soranchi Menu</span>
                 </div>
-                <div class="gold-separator-line">
-                    <div class="gold-active-chunk"></div>
-                </div>
+                <div class="gold-separator-line"><div class="gold-active-chunk"></div></div>
             </div>
             
             <div class="row g-4">
                 <div th:each="product : ${products}" th:if="${product.category == cat.name}" class="col-12 col-md-6 col-lg-4">
                     <div class="product-card">
                         <a th:href="@{/product/{id}(id=${product.id})}" class="product-img-wrap">
-                            <img th:src="@{'/image/' + ${product.imageUrl}}" th:alt="${product.name}" class="product-img">
+                            <img th:src="@{'/images/' + ${product.imageUrl}}" th:alt="${product.name}" class="product-img">
                             <div class="icon-overlay"><i class="fas fa-eye">🔎</i></div>
                         </a>
                         <div class="product-info text-center">
@@ -90,12 +82,24 @@
                             <div class="product-price text-danger fw-bold mt-1" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
                             
                             <div class="mt-3 mb-1">
-                                <button type="button" 
+                                <!-- NẾU LÀ ĐỒ ĂN: Thêm thẳng vào giỏ, KHÔNG mở popup -->
+                                <form th:if="${#strings.equalsIgnoreCase(cat.name, 'Đồ ăn')}" th:action="@{/cart/add}" method="post">
+                                    <input type="hidden" name="id" th:value="${product.id}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <input type="hidden" name="options" value="FOOD">
+                                    <button type="submit" class="btn btn-dark w-100 btn-sm py-2 fw-bold">
+                                        <i class="fas fa-cart-plus me-1"></i> THÊM VÀO GIỎ
+                                    </button>
+                                </form>
+
+                                <!-- NẾU LÀ ĐỒ UỐNG: Mở popup chọn Size, Đường, Đá, Topping -->
+                                <button th:unless="${#strings.equalsIgnoreCase(cat.name, 'Đồ ăn')}"
+                                        type="button" 
                                         class="btn btn-dark w-100 btn-sm py-2 fw-bold btn-trigger-topping"
                                         th:data-id="${product.id}"
                                         th:data-name="${product.name}"
                                         th:data-price="${product.price}"
-                                        th:data-img="@{'/image/' + ${product.imageUrl}}">
+                                        th:data-img="@{'/images/' + ${product.imageUrl}}">
                                     <i class="fas fa-cart-plus me-1"></i> THÊM VÀO GIỎ
                                 </button>
                             </div>
@@ -103,13 +107,11 @@
                     </div>
                 </div>
             </div>
-            
         </div>
-
     </div>
 
-    <!-- Modal chọn Đường, Đá và Topping động từ bảng toppings -->
-    <div class="modal fade" id="toppingModal" tabindex="-1" aria-labelledby="toppingModalLabel" aria-hidden="true">
+    <!-- Modal chọn Size, Đường, Đá và Topping cho ĐỒ UỐNG -->
+    <div class="modal fade" id="toppingModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
                 
@@ -121,11 +123,34 @@
                             <h5 class="fw-bold text-danger mb-0"><span id="modal-realtime-price">0</span> VNĐ</h5>
                         </div>
                     </div>
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
                 </div>
 
-                <div class="modal-body py-4" style="max-height: 60vh; overflow-y: auto;">
+                <div class="modal-body py-4" style="max-height: 62vh; overflow-y: auto;">
+
+                    <!-- CHỌN SIZE -->
+                    <div class="option-group mb-4">
+                        <label class="fw-bold text-dark mb-2 d-flex justify-content-between">
+                            <span>🥤 Kích cỡ (Size)</span>
+                            <span class="badge bg-warning text-dark" style="font-size: 10px;">Bắt buộc</span>
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-size" name="sizeLevel" id="sizeS" value="Size S" data-extra="0" checked>
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="sizeS">Size S (+0đ)</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-size" name="sizeLevel" id="sizeM" value="Size M" data-extra="5000">
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="sizeM">Size M (+5k)</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check option-size" name="sizeLevel" id="sizeL" value="Size L" data-extra="10000">
+                                <label class="btn btn-outline-dark w-100 py-2 text-center fs-7" for="sizeL">Size L (+10k)</label>
+                            </div>
+                        </div>
+                    </div>
                     
+                    <!-- CHỌN MỨC ĐƯỜNG -->
                     <div class="option-group mb-4">
                         <label class="fw-bold text-dark mb-2 d-flex justify-content-between">
                             <span>🍬 Mức đường</span>
@@ -151,6 +176,7 @@
                         </div>
                     </div>
 
+                    <!-- CHỌN MỨC ĐÁ -->
                     <div class="option-group mb-4">
                         <label class="fw-bold text-dark mb-2 d-flex justify-content-between">
                             <span>❄️ Mức đá</span>
@@ -172,7 +198,7 @@
                         </div>
                     </div>
 
-                    <!-- Danh sách Topping lấy trực tiếp từ bảng toppings (trạng thái Đang bán) -->
+                    <!-- CHỌN TOPPING -->
                     <div class="option-group" th:if="${activeToppings != null and !#lists.isEmpty(activeToppings)}">
                         <label class="fw-bold text-dark mb-2">🧋 Thêm Topping</label>
                         <div class="list-group border-0">
@@ -202,7 +228,7 @@
                         <input type="hidden" name="quantity" id="submit-quantity" value="1">
                         <input type="hidden" name="options" id="submit-options" value="">
                         
-                        <button type="submit" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm border border-dark" id="btn-confirm-add" style="border-radius: 8px;">
+                        <button type="submit" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm border border-dark" style="border-radius: 8px;">
                             Thêm vào giỏ hàng - <span id="modal-total-price-btn">0</span>đ
                         </button>
                     </form>
@@ -213,43 +239,49 @@
     </div>
 
     <script>
-        (function() {
-            setTimeout(function() {
-                const scrollZone = document.getElementById("admin-scroll-zone") || document.getElementById("shop-scroll-zone");
-                const sidebarLinks = document.querySelectorAll('.sidebar-custom a[href^="#section-"], a[href^="#section-"]');
-                
-                if (scrollZone && sidebarLinks.length > 0) {
-                    sidebarLinks.forEach(link => {
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault(); 
-                            const targetId = this.getAttribute("href").substring(1);
-                            const targetElement = document.getElementById(targetId);
-                            if (targetElement) {
-                                const targetPos = targetElement.getBoundingClientRect().top - scrollZone.getBoundingClientRect().top;
-                                const finalScroll = scrollZone.scrollTop + targetPos;
-                                scrollZone.scrollTo({
-                                    top: finalScroll - 5,
-                                    behavior: "smooth"
-                                });
-                            }
-                        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollZone = document.getElementById("admin-scroll-zone") || document.getElementById("shop-scroll-zone");
+
+            function scrollToTargetSection(targetId) {
+                if (!scrollZone || !targetId) return;
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    const offsetTop = targetElement.offsetTop - scrollZone.offsetTop;
+                    scrollZone.scrollTo({
+                        top: Math.max(0, offsetTop - 10),
+                        behavior: "smooth"
                     });
                 }
-            }, 100);
+            }
 
+            // 1. Tự động cuộn khi vừa chuyển trang từ Trang chủ sang /products#section-...
+            if (window.location.hash && window.location.hash.startsWith('#section-')) {
+                setTimeout(() => scrollToTargetSection(window.location.hash.substring(1)), 150);
+            }
+
+            // 2. Bắt sự kiện click trực tiếp vào menu danh mục ở Sidebar khi đang ở trang /products
+            document.querySelectorAll('a[data-target^="section-"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (scrollZone) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('data-target');
+                        history.replaceState(null, '', '#' + targetId);
+                        scrollToTargetSection(targetId);
+                    }
+                });
+            });
+
+            // 3. Điều khiển Modal đồ uống
             const toppingModalElement = document.getElementById('toppingModal');
             if (!toppingModalElement) return;
             
-            const toppingModal = new bootstrap.Modal(toppingModalElement);
+            const toppingModal = bootstrap.Modal.getOrCreateInstance(toppingModalElement);
             const modalImg = document.getElementById('modal-product-img');
             const modalName = document.getElementById('modal-product-name');
             const modalRealtimePrice = document.getElementById('modal-realtime-price');
             const modalTotalPriceBtn = document.getElementById('modal-total-price-btn');
             
             const inputQty = document.getElementById('modal-quantity');
-            const btnMinus = document.getElementById('btn-qty-minus');
-            const btnPlus = document.getElementById('btn-qty-plus');
-            
             const submitProductId = document.getElementById('submit-product-id');
             const submitQuantity = document.getElementById('submit-quantity');
             const submitOptions = document.getElementById('submit-options');
@@ -262,34 +294,32 @@
             }
 
             function calculateTotalPrice() {
+                const selectedSize = document.querySelector('.option-size:checked');
+                const sizeExtra = selectedSize ? parseFloat(selectedSize.getAttribute('data-extra') || 0) : 0;
+
                 let toppingValueSum = 0;
-                const activeToppings = document.querySelectorAll('.option-topping:checked');
-                activeToppings.forEach(checkbox => {
+                document.querySelectorAll('.option-topping:checked').forEach(checkbox => {
                     toppingValueSum += parseFloat(checkbox.getAttribute('data-price') || 0);
                 });
                 
-                modalRealtimePrice.textContent = formatMoney(currentBasePrice);
-                const totalFinalPrice = (currentBasePrice + toppingValueSum) * currentQuantity;
-                modalTotalPriceBtn.textContent = formatMoney(totalFinalPrice);
+                const singleUnitPrice = currentBasePrice + sizeExtra;
+                modalRealtimePrice.textContent = formatMoney(singleUnitPrice);
+                modalTotalPriceBtn.textContent = formatMoney((singleUnitPrice + toppingValueSum) * currentQuantity);
             }
 
             document.addEventListener('click', function(e) {
                 const triggerBtn = e.target.closest('.btn-trigger-topping');
                 if (triggerBtn) {
                     e.preventDefault();
-                    
-                    const pId = triggerBtn.getAttribute('data-id');
-                    const pName = triggerBtn.getAttribute('data-name');
+                    submitProductId.value = triggerBtn.getAttribute('data-id');
+                    modalName.textContent = triggerBtn.getAttribute('data-name');
                     currentBasePrice = parseFloat(triggerBtn.getAttribute('data-price') || 0);
-                    const pImg = triggerBtn.getAttribute('data-img');
-                    
-                    submitProductId.value = pId;
-                    modalName.textContent = pName;
-                    modalImg.src = pImg;
+                    modalImg.src = triggerBtn.getAttribute('data-img');
                     
                     currentQuantity = 1;
                     inputQty.value = 1;
                     submitQuantity.value = 1;
+                    document.getElementById('sizeS').checked = true;
                     document.getElementById('sugar100').checked = true;
                     document.getElementById('iceNormal').checked = true;
                     document.querySelectorAll('.option-topping').forEach(cb => cb.checked = false);
@@ -299,18 +329,18 @@
                 }
             });
 
-            document.querySelectorAll('.option-topping').forEach(checkbox => {
-                checkbox.addEventListener('change', calculateTotalPrice);
+            document.querySelectorAll('.option-size, .option-topping').forEach(el => {
+                el.addEventListener('change', calculateTotalPrice);
             });
 
-            btnPlus.addEventListener('click', function() {
+            document.getElementById('btn-qty-plus').addEventListener('click', function() {
                 currentQuantity++;
                 inputQty.value = currentQuantity;
                 submitQuantity.value = currentQuantity;
                 calculateTotalPrice();
             });
 
-            btnMinus.addEventListener('click', function() {
+            document.getElementById('btn-qty-minus').addEventListener('click', function() {
                 if (currentQuantity > 1) {
                     currentQuantity--;
                     inputQty.value = currentQuantity;
@@ -320,15 +350,16 @@
             });
 
             document.getElementById('form-add-to-cart').addEventListener('submit', function() {
+                const sizeText = document.querySelector('.option-size:checked').value;
                 const sugarText = document.querySelector('.option-sugar:checked').value;
                 const iceText = document.querySelector('.option-ice:checked').value;
                 let toppingList = [];
                 document.querySelectorAll('.option-topping:checked').forEach(cb => {
                     toppingList.push(cb.value);
                 });
-                submitOptions.value = `${sugarText}, ${iceText}` + (toppingList.length > 0 ? `, Topping: ${toppingList.join(', ')}` : '');
+                submitOptions.value = `${sizeText}, ${sugarText}, ${iceText}` + (toppingList.length > 0 ? `, Topping: ${toppingList.join(', ')}` : '');
             });
-        })();
+        });
     </script>
 
     <style>
@@ -336,6 +367,7 @@
             height: calc(100vh - 120px) !important; 
             overflow-y: auto !important; 
             overflow-x: hidden !important;
+            position: relative;
         }
         .scroll-zone-custom::-webkit-scrollbar { width: 6px; }
         .scroll-zone-custom::-webkit-scrollbar-thumb { background-color: #d4a017; border-radius: 10px; }
@@ -346,7 +378,6 @@
         .luxury-sub-tag { font-size: 0.75rem; padding: 4px 12px; border-radius: 4px; font-weight: bold; }
         .gold-separator-line { width: 100%; height: 2px; background-color: #e9ecef; margin-top: 12px; position: relative; }
         .gold-active-chunk { position: absolute; top: 0; left: 0; width: 100px; height: 100%; background-color: #d4a017; }
-        
         .btn-check:checked + .btn-outline-dark { background-color: #1a1a1a !important; color: #d4a017 !important; border-color: #1a1a1a !important; font-weight: bold; }
         .fs-7 { font-size: 0.85rem; }
         .style-cursor { cursor: pointer; }

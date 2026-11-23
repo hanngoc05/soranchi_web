@@ -4,18 +4,17 @@
 
 <div th:fragment="content" class="container py-4">
 
-    <!-- Khung thông báo lỗi / thành công động -->
     <div id="checkout-alert-error" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 py-3 px-4 small d-flex align-items-center mb-4 d-none" role="alert">
         <i class="fas fa-exclamation-circle me-3 text-danger fs-5"></i>
         <div class="flex-grow-1 fw-medium text-danger" id="checkout-error-text"></div>
-        <button type="button" class="btn-close" onclick="document.getElementById('checkout-alert-error').classList.add('d-none')" aria-label="Close"></button>
+        <button type="button" class="btn-close" onclick="document.getElementById('checkout-alert-error').classList.add('d-none')"></button>
     </div>
 
     <div class="row g-4">
-        <!-- Cột trái: Thông tin nhận hàng & Hình thức thanh toán -->
+        <!-- Cột trái: Thông tin nhận hàng, Vận chuyển & Thanh toán -->
         <div class="col-lg-7">
             <div class="card shadow-sm border-0 rounded-4 bg-white p-4">
-                <h5 class="fw-bold mb-4 pb-2 border-bottom text-dark" style="letter-spacing: -0.3px;">
+                <h5 class="fw-bold mb-4 pb-2 border-bottom text-dark">
                     <i class="fas fa-shipping-fast me-2 text-warning"></i>Thông tin nhận hàng
                 </h5>
                 
@@ -24,91 +23,95 @@
                         <label class="form-label fw-semibold small text-secondary">Họ và tên người nhận <span class="text-danger">*</span></label>
                         <input type="text" name="fullName" id="customer-name" 
                                th:value="${user != null ? user.fullName : ''}" 
-                               class="form-control rounded-3 py-2" placeholder="Ví dụ: Vũ Ngọc Hân" required>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold small text-secondary">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" name="phone" id="customer-phone" 
-                                   th:value="${user != null and user.phone != null ? user.phone : ''}" 
-                                   class="form-control rounded-3 font-monospace py-2" placeholder="0xxxxxxxxx" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold small text-secondary">Email nhận thông báo</label>
-                            <input type="email" name="email" id="customer-email" 
-                                   class="form-control rounded-3 py-2" placeholder="example@gmail.com">
-                        </div>
+                               class="form-control rounded-3 py-2" placeholder="Nhập họ và tên..." required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small text-secondary">Địa chỉ giao hàng chi tiết <span class="text-danger">*</span></label>
-                        <textarea name="address" id="customer-address" class="form-control rounded-3" rows="2" 
-                                  placeholder="Số nhà, tên ngõ/đường, phường/xã..." th:text="${user != null ? user.address : ''}" required></textarea>
+                        <label class="form-label fw-semibold small text-secondary">Số điện thoại (10 chữ số) <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" id="customer-phone" maxlength="10"
+                               th:value="${user != null and user.phone != null ? user.phone : ''}" 
+                               class="form-control rounded-3 font-monospace py-2" placeholder="Ví dụ: 0912345678" required>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-semibold small text-secondary">Ghi chú cho quán</label>
-                        <textarea name="note" id="customer-note" class="form-control rounded-3" rows="2" 
-                                  placeholder="Ví dụ: Ít đá, giao vào giờ nghỉ trưa..."></textarea>
+                        <label class="form-label fw-semibold small text-secondary">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
+                        <textarea name="address" id="customer-address" class="form-control rounded-3" rows="2" 
+                                  placeholder="Số nhà, tên đường, phường/xã..." th:text="${user != null ? user.address : ''}" required></textarea>
+                    </div>
+
+                    <!-- Bước 2: Phương thức vận chuyển từ bảng PhuongThucVanChuyen -->
+                    <h5 class="fw-bold mt-4 mb-3 text-dark border-bottom pb-2">
+                        <i class="fas fa-truck me-2 text-warning"></i>Phương thức vận chuyển
+                    </h5>
+                    <div class="mb-4">
+                        <div th:each="ship, iter : ${shippingUnits}" class="border rounded-3 p-3 mb-2 bg-light d-flex align-items-center">
+                            <input class="form-check-input me-3 shipping-radio" type="radio" name="shippingUnitId"
+                                   th:id="'ship-' + ${ship.id}"
+                                   th:value="${ship.id}"
+                                   th:data-fee="${ship.shippingFee}"
+                                   th:checked="${iter.index == 0}" style="cursor: pointer;">
+                            <label class="form-check-label fw-medium text-dark flex-grow-1 d-flex justify-content-between align-items-center"
+                                   th:for="'ship-' + ${ship.id}" style="cursor: pointer;">
+                                <div>
+                                    <span th:text="${ship.name}">Giao hàng tiêu chuẩn</span>
+                                    <span class="d-block text-muted small fw-normal" th:text="'Dự kiến: ' + ${ship.estimatedTime}">30 - 45 phút</span>
+                                </div>
+                                <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(ship.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">15,000đ</span>
+                            </label>
+                        </div>
                     </div>
                     
-                    <h5 class="fw-bold mt-4 mb-3 text-dark border-bottom pb-2" style="letter-spacing: -0.3px;">
+                    <!-- Bước 2: Phương thức thanh toán từ bảng PhuongThucThanhToan -->
+                    <h5 class="fw-bold mt-4 mb-3 text-dark border-bottom pb-2">
                         <i class="fas fa-wallet me-2 text-warning"></i>Phương thức thanh toán
                     </h5>
 
-                    <!-- Phương thức COD -->
                     <div class="border rounded-3 p-3 mb-2 bg-light d-flex align-items-center">
                         <input class="form-check-input me-3" type="radio" name="paymentMethod" value="COD" id="pay-cod" checked style="cursor: pointer;">
                         <label class="form-check-label fw-medium text-dark flex-grow-1" for="pay-cod" style="cursor: pointer;">
                             <i class="fas fa-money-bill-wave text-success me-2"></i>Thanh toán khi nhận hàng (COD)
-                            <span class="d-block text-muted small fw-normal">Thanh toán bằng tiền mặt khi shipper giao đồ uống</span>
+                            <span class="d-block text-muted small fw-normal">Thanh toán tiền mặt khi nhận đồ uống</span>
                         </label>
                     </div>
 
-                    <!-- Phương thức VietQR -->
                     <div class="border rounded-3 p-3 mb-4 bg-light d-flex align-items-center">
                         <input class="form-check-input me-3" type="radio" name="paymentMethod" value="BANK" id="pay-bank" style="cursor: pointer;">
                         <label class="form-check-label fw-medium text-dark flex-grow-1" for="pay-bank" style="cursor: pointer;">
                             <i class="fas fa-qrcode text-primary me-2"></i>Thanh toán trực tuyến (Quét mã VietQR)
-                            <span class="d-block text-muted small fw-normal">Hệ thống tạo mã QR động kèm xác nhận giao dịch</span>
+                            <span class="d-block text-muted small fw-normal">Sinh mã giao dịch và quét QR qua ứng dụng ngân hàng</span>
                         </label>
                     </div>
 
-                    <button type="button" id="btn-submit-main" class="btn btn-dark w-100 fw-semibold py-3 rounded-3 shadow-sm d-flex justify-content-center align-items-center gap-2">
-                        <span>Hoàn tất đặt hàng</span>
-                        <i class="fas fa-arrow-right"></i>
+                    <button type="button" id="btn-submit-main" class="btn btn-dark w-100 fw-bold py-3 rounded-3 shadow-sm text-warning">
+                        <i class="fas fa-check-circle me-2"></i>Đặt hàng ngay
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Cột phải: Voucher & Tóm tắt đơn hàng -->
+        <!-- Cột phải: Khuyến mãi & Tóm tắt đơn hàng -->
         <div class="col-lg-5">
-            <!-- Voucher -->
             <div class="card border-0 shadow-sm p-4 bg-white rounded-4 mb-4">
-                <h6 class="fw-bold text-dark mb-2"><i class="fas fa-ticket-alt me-2 text-danger"></i>Mã ưu đãi / Khuyến mãi</h6>
+                <h6 class="fw-bold text-dark mb-2"><i class="fas fa-ticket-alt me-2 text-danger"></i>Mã khuyến mãi</h6>
                 <form th:action="@{/checkout/apply-coupon}" method="post" class="d-flex gap-2">
                     <input type="text" name="couponCode" class="form-control rounded-3 font-monospace text-uppercase" 
-                           th:value="${session.appliedPromoCode}" placeholder="Nhập mã ví dụ: NOEL20" required>
+                           th:value="${session.appliedPromoCode}" placeholder="Nhập mã giảm giá..." required>
                     <button type="submit" class="btn btn-dark btn-sm px-3 rounded-3 fw-medium">Áp dụng</button>
                 </form>
                 <div th:if="${session.promoError}" class="text-danger small mt-2 fw-medium" th:text="${session.promoError}"></div>
                 <div th:if="${session.appliedPromoCode}" class="text-success small mt-2 fw-medium">
-                    <i class="fas fa-check-circle me-1"></i>Đã áp dụng mã ưu đãi thành công!
+                    <i class="fas fa-check-circle me-1"></i>Đã áp dụng mã <strong th:text="${session.appliedPromoCode}"></strong>!
                 </div>
             </div>
 
-            <!-- Tóm tắt đơn hàng -->
             <div class="card shadow-sm border-0 bg-white rounded-4 p-4">
                 <h6 class="fw-bold mb-3 border-bottom pb-2 text-dark">
                     Đơn hàng của bạn (<span th:text="${#lists.size(cartItems)}"></span> món)
                 </h6>
                 <div class="order-items overflow-auto pe-1" style="max-height: 240px;">
                     <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3 pb-2 border-bottom">
-                        <img th:src="${item.imageUrl != null and (item.imageUrl.startsWith('http://') or item.imageUrl.startsWith('https://')) ? item.imageUrl : ('/image/' + item.imageUrl)}" 
-                             class="rounded-3 border" width="48" height="48" style="object-fit: cover;"
-                             onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
+                        <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : ('/images/' + item.imageUrl)}" 
+                             class="rounded-3 border" width="48" height="48" style="object-fit: cover;">
                         <div class="ms-3 flex-grow-1">
                             <div class="fw-bold text-dark small" th:text="${item.name}"></div>
                             <div class="text-muted" style="font-size: 0.78rem;">Số lượng: <span class="fw-semibold text-dark" th:text="${item.quantity}"></span></div>
@@ -123,20 +126,19 @@
                         <span class="text-dark fw-medium" th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                     </div>
                     
-                    <div th:if="${session.appliedPromoCode != null}" class="d-flex justify-content-between mb-2 small text-success fw-bold">
-                        <span th:text="'Khuyến mãi đã áp (' + ${session.discountPercent} + '%):'"></span>
-                        <span th:text="'- ' + ${#numbers.formatDecimal(session.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                    <div th:if="${discountAmount > 0}" class="d-flex justify-content-between mb-2 small text-success fw-bold">
+                        <span th:text="'Giảm giá (' + ${session.discountPercent} + '%):'"></span>
+                        <span th:text="'- ' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                     </div>
                     
                     <div class="d-flex justify-content-between mb-2 small text-secondary">
                         <span>Phí vận chuyển:</span>
-                        <span class="text-success fw-medium">Miễn phí</span>
+                        <span class="text-dark fw-medium" id="display-shipping-fee">0đ</span>
                     </div>
                     <hr class="my-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold text-dark">Tổng tiền thanh toán:</span>
-                        <span class="fw-bold text-danger fs-4" id="checkout-total-price" 
-                              th:text="${session.finalPrice != null ? #numbers.formatDecimal(session.finalPrice, 0, 'COMMA', 0, 'POINT') : #numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        <span class="fw-bold text-danger fs-4" id="checkout-total-price">0 đ</span>
                     </div>
                 </div>
             </div>
@@ -151,208 +153,174 @@
                     <h6 class="modal-title fw-bold text-dark mb-0">
                         <i class="fas fa-qrcode text-primary me-2"></i>Thanh toán trực tuyến VietQR
                     </h6>
-                    <button type="button" class="btn-close" id="btn-close-qr-modal" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" id="btn-close-qr-modal"></button>
                 </div>
                 <div class="modal-body text-center p-4">
-                    <p class="text-muted small mb-3">Mở app Ngân hàng bất kỳ để quét mã QR thanh toán</p>
+                    <p class="text-muted small mb-2">Quét mã QR bằng ứng dụng ngân hàng để xác thực chuyển tiền</p>
                     <div class="mx-auto p-2 border rounded-4 bg-white shadow-sm mb-3" style="width: 220px; height: 220px;">
                         <img id="vietqr-image-placeholder" src="" alt="Mã VietQR" class="img-fluid w-100 h-100" style="object-fit: contain;">
                     </div>
                     
                     <div class="bg-light rounded-3 p-3 text-start small mb-3 border">
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-secondary">Ngân hàng:</span>
-                            <span class="fw-bold text-dark">Vietcombank (VCB)</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-secondary">Chủ tài khoản:</span>
-                            <span class="fw-bold text-dark">VU NGOC HAN</span>
+                            <span class="text-secondary">Mã giao dịch:</span>
+                            <span class="fw-bold text-dark font-monospace" id="qr-modal-trans">TRANS_...</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-secondary">Số tiền:</span>
                             <span class="fw-bold text-danger fs-6" id="qr-modal-amount">0đ</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-secondary">Nội dung chuyển khoản:</span>
+                            <span class="text-secondary">Nội dung CK:</span>
                             <span class="fw-bold text-primary font-monospace" id="qr-modal-info">SRC</span>
                         </div>
                     </div>
 
-                    <!-- Nút xác nhận thủ công cho người dùng / khi demo -->
                     <button type="button" class="btn btn-success w-100 fw-bold py-2.5 rounded-3 shadow-sm mb-2" id="btn-confirm-payment">
-                        <i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản
+                        <i class="fas fa-check-circle me-1"></i> Xác nhận đã chuyển khoản thành công
                     </button>
-                    
-                    <div class="text-muted" style="font-size: 11px;">
-                        Hệ thống sẽ cập nhật trạng thái đơn hàng ngay khi nhận được xác nhận thanh toán.
-                    </div>
+                    <button type="button" class="btn btn-outline-danger w-100 btn-sm rounded-3" id="btn-cancel-payment">
+                        Hủy giao dịch / Chọn phương thức khác
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script điều khiển -->
-    <script>
+    <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            const baseAfterDiscount = /*[[${finalPrice}]]*/ 0;
             const btnSubmit = document.getElementById('btn-submit-main');
             const alertBox = document.getElementById('checkout-alert-error');
             const errorText = document.getElementById('checkout-error-text');
-            const btnConfirmPayment = document.getElementById('btn-confirm-payment');
             const modalEl = document.getElementById('vietqrModal');
 
             let currentOrderId = null;
             let pollInterval = null;
 
-            function showError(msg) {
-                if (alertBox && errorText) {
-                    errorText.innerText = msg;
-                    alertBox.classList.remove('d-none');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    alert(msg);
-                }
+            function updateSummaryTotal() {
+                const selectedShip = document.querySelector('.shipping-radio:checked');
+                const shipFee = selectedShip ? parseFloat(selectedShip.getAttribute('data-fee') || 0) : 0;
+                document.getElementById('display-shipping-fee').textContent = shipFee.toLocaleString('vi-VN') + 'đ';
+                document.getElementById('checkout-total-price').textContent = (baseAfterDiscount + shipFee).toLocaleString('vi-VN') + ' đ';
             }
 
-            if (!btnSubmit) return;
+            document.querySelectorAll('.shipping-radio').forEach(r => r.addEventListener('change', updateSummaryTotal));
+            updateSummaryTotal();
+
+            function showError(msg) {
+                errorText.innerText = msg;
+                alertBox.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
 
             btnSubmit.addEventListener('click', function() {
                 const nameInput = document.getElementById('customer-name');
-                if (!nameInput || !nameInput.value.trim()) {
-                    showError('Vui lòng nhập họ và tên người nhận!');
-                    if (nameInput) nameInput.focus();
-                    return;
-                }
-
                 const phoneInput = document.getElementById('customer-phone');
-                const rawPhone = phoneInput ? phoneInput.value.trim() : '';
-                const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+                const addressInput = document.getElementById('customer-address');
 
-                if (cleanPhone.length < 9 || cleanPhone.length > 11) {
-                    showError('Vui lòng nhập số điện thoại hợp lệ (từ 9 đến 11 chữ số)!');
-                    if (phoneInput) phoneInput.focus();
+                if (!nameInput.value.trim()) {
+                    showError('Vui lòng nhập Họ và tên người nhận!');
+                    nameInput.focus();
                     return;
                 }
 
-                const addressInput = document.getElementById('customer-address');
-                if (!addressInput || !addressInput.value.trim()) {
-                    showError('Vui lòng nhập địa chỉ giao hàng chi tiết!');
-                    if (addressInput) addressInput.focus();
+                const cleanPhone = phoneInput.value.trim().replace(/[^0-9]/g, '');
+                if (!/^0[0-9]{9}$/.test(cleanPhone)) {
+                    showError('Số điện thoại phải đúng định dạng 10 chữ số (bắt đầu bằng số 0)!');
+                    phoneInput.focus();
+                    return;
+                }
+
+                if (!addressInput.value.trim()) {
+                    showError('Vui lòng nhập Địa chỉ nhận hàng!');
+                    addressInput.focus();
                     return;
                 }
 
                 btnSubmit.disabled = true;
                 btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...';
 
+                const selectedShip = document.querySelector('.shipping-radio:checked');
+                const isBank = document.getElementById('pay-bank').checked;
+
                 const formData = new FormData();
                 formData.append('fullName', nameInput.value.trim());
                 formData.append('phone', cleanPhone);
                 formData.append('address', addressInput.value.trim());
-
-                const noteInput = document.getElementById('customer-note');
-                formData.append('note', noteInput ? noteInput.value.trim() : '');
-
-                const isBank = document.getElementById('pay-bank').checked;
+                if (selectedShip) formData.append('shippingUnitId', selectedShip.value);
                 formData.append('paymentMethod', isBank ? 'BANK' : 'COD');
 
-                fetch('/api/checkout/create-order', {
-                    method: 'POST',
-                    body: formData
-                })
+                fetch('/api/checkout/create-order', { method: 'POST', body: formData })
                 .then(res => res.json())
                 .then(data => {
                     if (!data.success) {
                         btnSubmit.disabled = false;
-                        btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
-                        showError(data.message || 'Không thể tạo đơn hàng!');
+                        btnSubmit.innerHTML = '<i class="fas fa-check-circle me-2"></i>Đặt hàng ngay';
+                        showError(data.message);
                         return;
                     }
 
-                    // Nếu COD: chuyển thẳng tới trang thành công
                     if (!isBank) {
                         window.location.href = '/order-success/' + data.orderId;
                     } else {
-                        // Nếu BANK: mở modal QR
                         currentOrderId = data.orderId;
-                        const amount = data.finalPrice;
                         const note = `SRC${currentOrderId}`;
-
-                        const BANK_ID = "VCB";
-                        const ACCOUNT_NO = "1234567890";
-                        const ACCOUNT_NAME = "VU NGOC HAN";
-
-                        const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.jpg?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                        const qrUrl = `https://img.vietqr.io/image/VCB-1234567890-compact2.jpg?amount=${Math.round(data.finalPrice)}&addInfo=${encodeURIComponent(note)}&accountName=VU%20NGOC%20HAN`;
 
                         document.getElementById('vietqr-image-placeholder').src = qrUrl;
-                        document.getElementById('qr-modal-amount').textContent = parseInt(amount).toLocaleString('vi-VN') + "đ";
+                        document.getElementById('qr-modal-trans').textContent = data.transCode;
+                        document.getElementById('qr-modal-amount').textContent = parseInt(data.finalPrice).toLocaleString('vi-VN') + 'đ';
                         document.getElementById('qr-modal-info').textContent = note;
 
-                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                            bsModal.show();
-                        } else {
-                            modalEl.classList.add('show');
-                            modalEl.style.display = 'block';
-                        }
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
-                        // Polling: Kiểm tra trạng thái đơn nếu có webhook/backend duyệt
                         pollInterval = setInterval(() => {
                             fetch(`/api/checkout/check-status/${currentOrderId}`)
                                 .then(res => res.json())
-                                .then(statusData => {
-                                    if (statusData.paid) {
+                                .then(st => {
+                                    if (st.paid) {
                                         clearInterval(pollInterval);
                                         window.location.href = '/order-success/' + currentOrderId;
                                     }
-                                })
-                                .catch(() => {});
+                                });
                         }, 2500);
                     }
                 })
-                .catch(err => {
+                .catch(() => {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
-                    showError('Lỗi kết nối máy chủ! Vui lòng thử lại sau.');
+                    btnSubmit.innerHTML = '<i class="fas fa-check-circle me-2"></i>Đặt hàng ngay';
+                    showError('Lỗi kết nối cơ sở dữ liệu! Không thể lưu thay đổi.');
                 });
             });
 
-            // Khi người dùng bấm nút xác nhận đã chuyển tiền
-            if (btnConfirmPayment) {
-                btnConfirmPayment.addEventListener('click', function() {
-                    if (!currentOrderId) return;
-                    btnConfirmPayment.disabled = true;
-                    btnConfirmPayment.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực giao dịch...';
+            document.getElementById('btn-confirm-payment').addEventListener('click', function() {
+                if (!currentOrderId) return;
+                this.disabled = true;
+                fetch(`/api/checkout/simulate-ipn/${currentOrderId}`, { method: 'POST' })
+                    .then(res => res.text())
+                    .then(result => {
+                        if (result === 'SUCCESS' || result === 'ALREADY_PAID') {
+                            if (pollInterval) clearInterval(pollInterval);
+                            window.location.href = '/order-success/' + currentOrderId;
+                        }
+                    });
+            });
 
-                    fetch(`/api/checkout/simulate-ipn/${currentOrderId}`, { method: 'POST' })
-                        .then(res => res.text())
-                        .then(result => {
-                            if (result === 'SUCCESS' || result === 'ALREADY_PAID') {
-                                if (pollInterval) clearInterval(pollInterval);
-                                window.location.href = '/order-success/' + currentOrderId;
-                            } else {
-                                alert('Không thể xác nhận thanh toán. Vui lòng thử lại!');
-                                btnConfirmPayment.disabled = false;
-                                btnConfirmPayment.innerHTML = '<i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản';
-                            }
-                        })
-                        .catch(() => {
-                            alert('Lỗi kết nối máy chủ khi xác thực!');
-                            btnConfirmPayment.disabled = false;
-                            btnConfirmPayment.innerHTML = '<i class="fas fa-check-circle me-1"></i> Tôi đã hoàn tất chuyển khoản';
-                        });
-                });
+            // Rẽ nhánh 4: Hủy giao dịch -> ghi FAILED vào GiaoDichThanhToan, giữ nguyên giỏ hàng
+            function handleCancelTransaction() {
+                if (pollInterval) clearInterval(pollInterval);
+                if (currentOrderId) {
+                    fetch(`/api/checkout/fail/${currentOrderId}`, { method: 'POST' });
+                }
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fas fa-check-circle me-2"></i>Đặt hàng ngay';
+                showError('Giao dịch thanh toán trực tuyến đã bị hủy hoặc thất bại. Giỏ hàng của bạn vẫn được giữ nguyên, vui lòng chọn lại phương thức thanh toán!');
             }
 
-            // Đóng Modal QR
-            const btnClose = document.getElementById('btn-close-qr-modal');
-            if (btnClose) {
-                btnClose.addEventListener('click', function() {
-                    if (pollInterval) clearInterval(pollInterval);
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '<span>Hoàn tất đặt hàng</span> <i class="fas fa-arrow-right"></i>';
-                    modalEl.classList.remove('show');
-                    modalEl.style.display = 'none';
-                });
-            }
+            document.getElementById('btn-cancel-payment').addEventListener('click', handleCancelTransaction);
+            document.getElementById('btn-close-qr-modal').addEventListener('click', handleCancelTransaction);
         });
     </script>
 </div>

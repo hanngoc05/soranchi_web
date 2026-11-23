@@ -19,15 +19,21 @@
                 <div class="p-3 mb-4 rounded-3 text-center" style="background-color: #faf8f5; border: 1px dashed #e5dacb;">
                     <p class="small text-muted mb-2">Bấm click xử lý bước tiếp theo đúng luồng Soranchi:</p>
                     
-                    <a th:if="${order.status == 'CHỜ XÁC NHẬN'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2" style="background-color: #d4a017; color: white;">
+                    <a th:if="${order.status == 'CHỜ XÁC NHẬN' or order.status == 'ĐÃ THANH TOÁN'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2" style="background-color: #d4a017; color: white;">
                         ✓ XÁC NHẬN & BẮT ĐẦU PHA CHẾ MÓN
                     </a>
                     <a th:if="${order.status == 'ĐANG CHUẨN BỊ'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2 text-white" style="background-color: #5c4033;">
-                        📦 ĐÓNG GÓI & BÀO GIAO CHO SHIPPER
+                        📦 ĐÓNG GÓI & BÀN GIAO CHO SHIPPER
                     </a>
                     <a th:if="${order.status == 'ĐANG GIAO HÀNG'}" th:href="@{/admin/order/update-status/{id}(id=${order.id})}" class="btn w-100 fw-bold py-2 text-white" style="background-color: #15803d;">
                         🤝 KHÁCH ĐÃ NHẬN LY - HOÀN THÀNH ĐƠN
                     </a>
+                    <div th:if="${order.status == 'HOÀN THÀNH'}" class="text-success fw-bold small">
+                        ✔ Đơn hàng này đã giao thành công và hoàn tất!
+                    </div>
+                    <div th:if="${order.status == 'ĐÃ HỦY' or order.status == 'THANH TOÁN THẤT BẠI'}" class="text-danger fw-bold small">
+                        ✖ Đơn hàng đã bị hủy / thanh toán không thành công.
+                    </div>
                 </div>
 
                 <h6 class="small fw-bold mb-3 font-monospace">📍 ĐỊA CHỈ KHÁCH NHẬN</h6>
@@ -43,7 +49,7 @@
                 <div class="d-flex flex-column gap-2 mb-3">
                     <div th:each="item : ${orderItems}" class="d-flex align-items-center justify-content-between bg-white p-2 rounded border border-light">
                         <div class="d-flex align-items-center gap-2 small">
-                            <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : '/image/' + item.imageUrl}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                            <img th:src="${item.imageUrl != null and item.imageUrl.startsWith('http') ? item.imageUrl : '/images/' + item.imageUrl}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
                             <div>
                                 <span class="fw-bold d-block" style="color: #2d251e;" th:text="${item.productName}"></span>
                                 <span class="text-muted small" th:text="'Số lượng: ' + ${item.quantity}"></span>

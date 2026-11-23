@@ -34,7 +34,7 @@
                     </a>
 
                     <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/users}">
-                        <i class="fas fa-users-cog me-2 text-info"></i> Quản lý Khách hàng
+                        <i class="fas fa-users-cog me-2 text-info"></i> Quản lý tài khoản khách hàng
                     </a>
                     
                     <a class="list-group-item list-group-item-action sub-item-link" th:href="@{/admin/categories}">
@@ -77,10 +77,11 @@
         <div th:unless="${session.loggedInUser != null and session.loggedInUser.role == 'ADMIN'}">
             <div th:if="${contentTemplate == 'trasua/pages/list' or contentTemplate == 'trasua/pages/home'}" class="w-100">
                 <a th:each="cat : ${globalCategories}" 
-                   class="list-group-item list-group-item-action sidebar-category-link" 
-                   th:href="'#section-' + ${cat.alias}">
-                   <i class="fas fa-chevron-right text-muted me-2 small-arrow"></i> 
-                   <span th:text="${cat.name}">Tên danh mục</span>
+                class="list-group-item list-group-item-action sidebar-category-link" 
+                th:href="@{'/products#section-' + ${cat.id}}"
+                th:data-target="'section-' + ${cat.id}">
+                <i class="fas fa-chevron-right text-muted me-2 small-arrow"></i> 
+                <span th:text="${cat.name}">Tên danh mục</span>
                 </a>
             </div>
         </div>

@@ -20,6 +20,9 @@ public class AdminToppingController {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+    // Thêm @Autowired ở đầu class AdminToppingController:
+    @Autowired
+    private com.example.demo.repository.ChiTietDonHangToppingRepository chiTietDonHangToppingRepository;
 
     private boolean isAdmin(HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
@@ -116,9 +119,11 @@ public class AdminToppingController {
             }
 
             // Kiểm tra xem topping đã từng xuất hiện trong đơn hàng chưa (tên món có chứa tên topping)
-            boolean usedInOrders = orderDetailRepository.findAll().stream()
-                    .anyMatch(od -> od.getProductName() != null
-                            && od.getProductName().toLowerCase().contains(topping.getName().toLowerCase()));
+
+
+// Thay đoạn kiểm tra trong hàm deleteTopping bằng:
+boolean usedInOrders = chiTietDonHangToppingRepository.findAll().stream()
+        .anyMatch(ct -> ct.getToppingId() == id);
 
             if (usedInOrders) {
                 topping.setStatus("Ngừng bán");

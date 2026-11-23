@@ -3,86 +3,63 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "cart_items")
+@Table(name = "ChiTietGioHang")
 public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_ctgh")
     private int id;
-    
-    @Column(name = "user_id")
-    private int userId;
-    
-    private int productId;
-    private String name;
-    private String size = "M";       // Mặc định Size M
-    private String toppings = "";    // Mặc định không có topping
-    private double basePrice;        // Giá gốc chưa tính size/topping
-    
-    @Column(length = 1000)
-    private String imageUrl;
-    
-    private double price;            // Đơn giá thực tế (đã cộng size/topping)
+
+    @Column(name = "so_luong", nullable = false)
     private int quantity;
+
+    @Column(name = "ghi_chu")
+    private String note;
+
+    @Column(name = "ma_gh", nullable = false)
+    private int cartId;
+
+    @Column(name = "ma_sp", nullable = false)
+    private int productId;
+
+    @Column(name = "ma_size", nullable = false)
+    private int sizeId = 1;
+
+    @Transient private int userId;
+    @Transient private String name;
+    @Transient private String size = "M";
+    @Transient private String toppings = "";
+    @Transient private double basePrice;
+    @Transient private String imageUrl;
+    @Transient private double price;
 
     public CartItem() {}
 
-    public CartItem(int productId, String name, String imageUrl, double price, int quantity) {
-        this.productId = productId;
-        this.name = name;
-        this.imageUrl = imageUrl;
-        this.basePrice = price;
-        this.price = price;
-        this.quantity = quantity;
-        this.size = "M";
-        this.toppings = "";
-    }
-
-    public CartItem(int userId, int productId, String name, String imageUrl, double price, int quantity) {
-        this.userId = userId;
-        this.productId = productId;
-        this.name = name;
-        this.imageUrl = imageUrl;
-        this.basePrice = price;
-        this.price = price;
-        this.quantity = quantity;
-        this.size = "M";
-        this.toppings = "";
-    }
-
-    public CartItem(int userId, int productId, String name, String size, String toppings, String imageUrl, double basePrice, double price, int quantity) {
-        this.userId = userId;
-        this.productId = productId;
-        this.name = name;
-        this.size = (size != null && !size.isEmpty()) ? size : "M";
-        this.toppings = (toppings != null) ? toppings : "";
-        this.imageUrl = imageUrl;
-        this.basePrice = basePrice;
-        this.price = price;
-        this.quantity = quantity;
-    }
-
-    // --- GETTERS ---
     public int getId() { return id; }
-    public int getUserId() { return userId; }
-    public int getProductId() { return productId; }
-    public String getName() { return name; }
-    public String getSize() { return size; }
-    public String getToppings() { return toppings; }
-    public double getBasePrice() { return basePrice; }
-    public String getImageUrl() { return imageUrl; }
-    public double getPrice() { return price; }
-    public int getQuantity() { return quantity; }
-
-    // --- SETTERS ---
     public void setId(int id) { this.id = id; }
-    public void setUserId(int userId) { this.userId = userId; }
+    public int getCartId() { return cartId; }
+    public void setCartId(int cartId) { this.cartId = cartId; }
+    public int getProductId() { return productId; }
     public void setProductId(int productId) { this.productId = productId; }
-    public void setName(String name) { this.name = name; }
-    public void setSize(String size) { this.size = size; }
-    public void setToppings(String toppings) { this.toppings = toppings; }
-    public void setBasePrice(double basePrice) { this.basePrice = basePrice; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setPrice(double price) { this.price = price; }
+    public int getSizeId() { return sizeId; }
+    public void setSizeId(int sizeId) { this.sizeId = sizeId; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+    public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
+    public String getToppings() { return toppings; }
+    public void setToppings(String toppings) { this.toppings = toppings; }
+    public double getBasePrice() { return basePrice; }
+    public void setBasePrice(double basePrice) { this.basePrice = basePrice; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 }

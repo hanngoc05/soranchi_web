@@ -3,19 +3,24 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "DanhMuc")
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_dm")
     private int id;
-    
-    private String name;  
-    private String alias; 
-    private String status = "ACTIVE"; // Mới thêm: ACTIVE hoặc INACTIVE
+
+    @Column(name = "ten_dm", nullable = false)
+    private String name;
+
+    @Transient
+    private String alias;
+
+    @Transient
+    private String status = "ACTIVE";
 
     public Category() {}
 
-    // Getters và Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }

@@ -16,7 +16,6 @@
         </a>
     </div>
 
-    <!-- Thông báo kết quả thao tác -->
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 py-2.5 px-3 small d-flex align-items-center" role="alert">
         <i class="fas fa-check-circle me-2 text-success fs-6"></i>
         <span class="fw-medium text-dark" th:text="${successMessage}"></span>
@@ -60,7 +59,7 @@
                         </td>
 
                         <td>
-                            <img th:src="${product.imageUrl != null and (product.imageUrl.startsWith('http://') or product.imageUrl.startsWith('https://')) ? product.imageUrl : ('/image/' + product.imageUrl)}" 
+                            <img th:src="${product.imageUrl != null and (product.imageUrl.startsWith('http://') or product.imageUrl.startsWith('https://')) ? product.imageUrl : ('/images/' + product.imageUrl)}" 
                                  th:alt="${product.name}" 
                                  class="rounded-3 border" 
                                  width="44" height="44" 
@@ -83,13 +82,12 @@
                                 Ngừng bán
                             </span>
                             <span th:unless="${'NGỪNG BÁN'.equalsIgnoreCase(product.status)}" class="badge rounded-pill px-2.5 py-1 fw-medium" style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
-                                • Đang bán
+                                Đang bán
                             </span>
                         </td>
 
                         <td class="text-end pe-4">
                             <div class="d-inline-flex align-items-center gap-1">
-                                <!-- Nút Xem chi tiết (Bước 2) -->
                                 <button type="button" class="btn btn-sm btn-light border-0 text-info rounded-2 px-2 py-1 action-btn" 
                                         data-bs-toggle="modal" 
                                         th:data-bs-target="'#detailModal' + ${product.id}"
@@ -97,14 +95,12 @@
                                     <i class="far fa-eye"></i>
                                 </button>
 
-                                <!-- Nút Sửa (Bước 4) -->
                                 <a th:href="@{/admin/product/edit/{id}(id=${product.id})}" 
                                    class="btn btn-sm btn-light border-0 text-secondary rounded-2 px-2 py-1 action-btn"
                                    title="Chỉnh sửa">
                                     <i class="far fa-edit"></i>
                                 </a>
 
-                                <!-- Nút Xóa (Bước 5) -->
                                 <a th:href="@{/admin/product/delete/{id}(id=${product.id})}" 
                                    class="btn btn-sm btn-light border-0 text-danger rounded-2 px-2 py-1 action-btn" 
                                    onclick="return confirm('Bạn có đồng ý xóa sản phẩm này không? Nếu sản phẩm đã có đơn hàng thì hệ thống sẽ chuyển sang trạng thái Ngừng bán.');"
@@ -113,7 +109,7 @@
                                 </a>
                             </div>
 
-                            <!-- Modal Xem Chi Tiết Sản Phẩm (Bước 2) -->
+                            <!-- Modal Xem Chi Tiết Sản Phẩm -->
                             <div class="modal fade text-start" th:id="'detailModal' + ${product.id}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -123,14 +119,16 @@
                                         </div>
                                         <div class="modal-body p-4">
                                             <div class="text-center mb-3">
-                                                <img th:src="${product.imageUrl != null and (product.imageUrl.startsWith('http://') or product.imageUrl.startsWith('https://')) ? product.imageUrl : ('/image/' + product.imageUrl)}" 
-                                                     class="rounded-3 border shadow-sm" width="110" height="110" style="object-fit: cover;"
+                                                <img th:src="${product.imageUrl != null and (product.imageUrl.startsWith('http://') or product.imageUrl.startsWith('https://')) ? product.imageUrl : ('/images/' + product.imageUrl)}"
+                                                     th:alt="${product.name}"
+                                                     class="rounded-3 border shadow-sm" 
+                                                     style="width: 110px; height: 110px; object-fit: cover;"
                                                      onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3081/3081162.png';">
                                                 <h5 class="mt-2 fw-bold text-dark" th:text="${product.name}"></h5>
                                                 <span class="badge bg-light text-dark border" th:text="${product.category}"></span>
                                             </div>
                                             <div class="row g-2 small">
-                                                <div class="col-6"><p class="mb-1"><strong>Mã sản phẩm:</strong> <span class="font-monospace text-primary fw-bold" th:text="${product.productCode}"></span></p></div>
+                                                <div class="col-6"><p class="mb-1"><strong>Mã sản phẩm:</strong> <span class="font-monospace text-primary fw-bold" th:text="${product.productCode != null ? product.productCode : ('SP#' + product.id)}"></span></p></div>
                                                 <div class="col-6"><p class="mb-1"><strong>Giá bán:</strong> <span class="text-danger fw-bold" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span></p></div>
                                                 <div class="col-6"><p class="mb-1"><strong>Số lượng tồn:</strong> <span th:text="${product.quantity}"></span></p></div>
                                                 <div class="col-6"><p class="mb-1"><strong>Trạng thái:</strong> 
